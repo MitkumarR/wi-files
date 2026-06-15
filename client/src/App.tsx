@@ -10,6 +10,7 @@ export type ViewState = 'explorer' | 'dashboard' | 'player' | 'auth';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>('explorer');
+  const [videoUrl, setVideoUrl] = useState<string>('');
 
   if (!isAuthenticated) {
     return <Auth onLogin={() => setIsAuthenticated(true)} />;
@@ -48,7 +49,10 @@ function App() {
         </div>
         <div 
           className="nav-item"
-          onClick={() => setIsAuthenticated(false)}
+          onClick={() => {
+            localStorage.removeItem('jwt_token');
+            setIsAuthenticated(false);
+          }}
         >
           <svg className="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -59,9 +63,9 @@ function App() {
 
       {/* Main Content Area */}
       <main className="main-content">
-        {currentView === 'explorer' && <Explorer />}
+        {currentView === 'explorer' && <Explorer onPlayVideo={(path) => { setVideoUrl(path); setCurrentView('player'); }} />}
         {currentView === 'dashboard' && <Dashboard />}
-        {currentView === 'player' && <Player />}
+        {currentView === 'player' && <Player videoUrl={videoUrl} />}
       </main>
     </div>
   );

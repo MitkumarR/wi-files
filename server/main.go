@@ -3,11 +3,15 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"wifiles-server/auth"
+	"wifiles-server/database"
 	"wifiles-server/drives"
 	"wifiles-server/files"
 	"wifiles-server/monitor"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -23,11 +27,69 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func securityMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// 1. Path traversal & restricted directories check
+		pathParam := r.URL.Query().Get("path")
+		if pathParam != "" {
+			if strings.Contains(pathParam, "..") {
+				http.Error(w, "Path traversal detected", http.StatusForbidden)
+				return
+			}
+			restricted := []string{"/proc", "/sys", "/dev", "/run"}
+			for _, prefix := range restricted {
+				if strings.HasPrefix(pathParam, prefix) {
+					http.Error(w, "Access to restricted directory denied", http.StatusForbidden)
+					return
+				}
+			}
+		}
+
+		// 2. JWT Verification (skip for login)
+		if r.URL.Path == "/api/auth/login" {
+			next(w, r)
+			return
+		}
+
+		authHeader := r.Header.Get("Authorization")
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		
+		// For video streaming, <video> tag can't send Authorization header easily
+		if tokenString == "" {
+			tokenString = r.URL.Query().Get("token")
+		}
+
+		if tokenString == "" {
+			http.Error(w, "Missing or invalid token", http.StatusUnauthorized)
+			return
+		}
+		claims := &auth.Claims{}
+
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return auth.JwtKey, nil
+		})
+
+		if err != nil || !token.Valid {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		// All good
+		next(w, r)
+	}
+}
+
 func main() {
-	http.HandleFunc("/api/files", corsMiddleware(files.HandleFiles))
-	http.HandleFunc("/api/drives", corsMiddleware(drives.HandleDrives))
-	http.HandleFunc("/api/monitor", corsMiddleware(monitor.HandleStats))
-	http.HandleFunc("/api/auth/login", corsMiddleware(auth.HandleLogin))
+	database.InitDB()
+
+	// Wrap handlers in security and cors middlewares
+	// corsMiddleware should be outermost so CORS headers are added even on 401/403
+	http.HandleFunc("/api/files", corsMiddleware(securityMiddleware(files.HandleFiles)))
+	http.HandleFunc("/api/download", corsMiddleware(securityMiddleware(files.HandleDownload)))
+	http.HandleFunc("/api/upload", corsMiddleware(securityMiddleware(files.HandleUpload)))
+	http.HandleFunc("/api/drives", corsMiddleware(securityMiddleware(drives.HandleDrives)))
+	http.HandleFunc("/api/monitor", corsMiddleware(securityMiddleware(monitor.HandleStats)))
+	http.HandleFunc("/api/auth/login", corsMiddleware(securityMiddleware(auth.HandleLogin)))
 
 	log.Println("Wi-File Backend running on http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

@@ -14,7 +14,11 @@ interface DriveInfo {
   type: string;
 }
 
-export default function Explorer() {
+interface ExplorerProps {
+  onPlayVideo?: (path: string) => void;
+}
+
+export default function Explorer({ onPlayVideo }: ExplorerProps) {
   const [currentPath, setCurrentPath] = useState('/');
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [drives, setDrives] = useState<DriveInfo[]>([]);
@@ -30,7 +34,9 @@ export default function Explorer() {
 
   const fetchDrives = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/drives');
+      const res = await fetch('/api/drives', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
+      });
       if (res.ok) {
         const data = await res.json();
         setDrives(data);
@@ -43,7 +49,9 @@ export default function Explorer() {
   const fetchFiles = async (path: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/files?path=${encodeURIComponent(path)}`);
+      const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
+      });
       if (res.ok) {
         const data = await res.json();
         setFiles(data);
@@ -53,6 +61,59 @@ export default function Explorer() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `/api/upload?path=${encodeURIComponent(currentPath)}`);
+    xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('jwt_token')}`);
+    
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        setUploadProgress(Math.round((event.loaded * 100) / event.total));
+      }
+    };
+    
+    xhr.onload = () => {
+      setIsUploading(false);
+      setUploadProgress(0);
+      if (xhr.status === 200) {
+        fetchFiles(currentPath);
+      } else {
+        alert('Upload failed');
+      }
+    };
+    
+    xhr.send(formData);
+  };
+
+  const downloadFile = (path: string) => {
+    fetch(`/api/download?path=${encodeURIComponent(path)}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
+    })
+    .then(res => res.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = path.split('/').pop() || 'download';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    });
   };
 
   const navigateTo = (path: string) => {
@@ -92,6 +153,17 @@ export default function Explorer() {
     <div className="explorer-container">
       <div className="header">
         <h1>Explorer</h1>
+        <div style={{ position: 'relative' }}>
+          <button className="btn">
+            {isUploading ? `Uploading ${uploadProgress}%` : 'Upload File'}
+          </button>
+          <input 
+            type="file" 
+            onChange={handleUpload}
+            style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }} 
+            disabled={isUploading}
+          />
+        </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '1rem', marginBottom: '1.5rem' }}>
@@ -144,7 +216,15 @@ export default function Explorer() {
                   {f.isDir ? <span style={{color: '#fbbf24'}}>📁</span> : <span style={{color: '#94a3b8'}}>📄</span>}
                 </div>
                 <div className="file-name" title={f.name}>{f.name}</div>
-                {!f.isDir && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>{formatSize(f.size)}</div>}
+                {!f.isDir && (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span>{formatSize(f.size)}</span>
+                    <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={(e) => { e.stopPropagation(); downloadFile(f.path); }}>↓</button>
+                    {f.name.endsWith('.mp4') && (
+                      <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: 'var(--accent)' }} onClick={(e) => { e.stopPropagation(); onPlayVideo && onPlayVideo(f.path); }}>▶</button>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
             {files.length === 0 && currentPath === '/' && <span style={{ color: 'var(--text-muted)', gridColumn: '1 / -1' }}>Directory is empty.</span>}

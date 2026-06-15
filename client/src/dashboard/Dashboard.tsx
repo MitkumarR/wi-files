@@ -12,7 +12,9 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch('http://localhost:8080/api/monitor');
+        const res = await fetch('/api/monitor', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
+        });
         if (res.ok) {
           const data = await res.json();
           setStats(data);

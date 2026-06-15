@@ -13,9 +13,17 @@ export default function Auth({ onLogin }: AuthProps) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8080/api/auth/login', { method: 'POST' });
+      const res = await fetch('/api/auth/login', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
       if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('jwt_token', data.token);
         onLogin();
+      } else {
+        alert('Invalid credentials');
       }
     } catch (err) {
       console.error(err);
