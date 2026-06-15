@@ -36,7 +36,7 @@ func createTables() {
 		modified_date DATETIME NOT NULL
 	);
 	CREATE INDEX IF NOT EXISTS idx_filename ON files_index(filename);
-	CREATE INDEX IF NOT EXISTS idx_path ON files_index(path);
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_path ON files_index(path);
 
 	CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,

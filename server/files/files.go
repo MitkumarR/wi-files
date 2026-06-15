@@ -3,6 +3,7 @@ package files
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,7 +24,11 @@ func HandleFiles(w http.ResponseWriter, r *http.Request) {
 
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		http.Error(w, "Failed to read directory", http.StatusInternalServerError)
+		if os.IsPermission(err) {
+			http.Error(w, "Permission denied", http.StatusForbidden)
+		} else {
+			http.Error(w, "Failed to read directory", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -68,18 +73,21 @@ func HandleUpload(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max memory limit, rest on disk
 	if err != nil {
+		log.Printf("Upload Error (ParseMultipartForm): %v", err)
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
 	}
 
 	path := r.URL.Query().Get("path") // Destination directory
 	if path == "" {
+		log.Println("Upload Error: Path required")
 		http.Error(w, "Path required", http.StatusBadRequest)
 		return
 	}
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
+		log.Printf("Upload Error (FormFile): %v", err)
 		http.Error(w, "Error retrieving file", http.StatusBadRequest)
 		return
 	}
@@ -88,12 +96,18 @@ func HandleUpload(w http.ResponseWriter, r *http.Request) {
 	destPath := filepath.Join(path, header.Filename)
 	out, err := os.Create(destPath)
 	if err != nil {
-		http.Error(w, "Error creating destination file", http.StatusInternalServerError)
+		log.Printf("Upload Error (os.Create %s): %v", destPath, err)
+		if os.IsPermission(err) {
+			http.Error(w, "Permission denied", http.StatusForbidden)
+		} else {
+			http.Error(w, "Error creating destination file", http.StatusInternalServerError)
+		}
 		return
 	}
 	defer out.Close()
 
 	if _, err := io.Copy(out, file); err != nil {
+		log.Printf("Upload Error (io.Copy): %v", err)
 		http.Error(w, "Error saving file", http.StatusInternalServerError)
 		return
 	}

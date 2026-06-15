@@ -14,6 +14,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// ... (middlewares)
+
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -81,6 +83,9 @@ func securityMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func main() {
 	database.InitDB()
+
+	// Start the background filesystem scanner on target directories
+	drives.StartBackgroundScan([]string{"/home", "/media", "/mnt"})
 
 	// Wrap handlers in security and cors middlewares
 	// corsMiddleware should be outermost so CORS headers are added even on 401/403

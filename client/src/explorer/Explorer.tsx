@@ -12,6 +12,9 @@ interface DriveInfo {
   mountpoint: string;
   size: string;
   type: string;
+  usedSpace?: string;
+  totalSpace?: string;
+  usedPct?: string;
 }
 
 interface ExplorerProps {
@@ -55,6 +58,8 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
       if (res.ok) {
         const data = await res.json();
         setFiles(data);
+      } else if (res.status === 403) {
+        alert("Permission denied to access this folder.");
       }
     } catch (err) {
       console.error('Failed to fetch files', err);
@@ -91,8 +96,10 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
       setUploadProgress(0);
       if (xhr.status === 200) {
         fetchFiles(currentPath);
+      } else if (xhr.status === 403) {
+        alert("Permission denied to upload files here.");
       } else {
-        alert('Upload failed');
+        alert('Upload failed: ' + xhr.responseText);
       }
     };
     
@@ -204,6 +211,21 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
                 <div className="file-name">..</div>
               </div>
             )}
+            {currentPath === '/' && drives.map((d, i) => (
+              <div 
+                key={`drive-${i}`} 
+                className="file-item"
+                onClick={() => navigateTo(d.mountpoint)}
+              >
+                <div className="file-icon" style={{ color: 'var(--primary)' }}>💾</div>
+                <div className="file-name">
+                  {d.name} <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>({d.mountpoint})</span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                  {d.usedSpace && d.totalSpace ? `${d.usedSpace} / ${d.totalSpace} (${d.usedPct})` : d.size}
+                </div>
+              </div>
+            ))}
             {files.map((f, i) => (
               <div 
                 key={i} 
