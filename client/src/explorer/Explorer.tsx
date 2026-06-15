@@ -1,4 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import {
+  getFolderIcon,
+  getFileIcon,
+  getHomeIcon,
+  getDriveUsbIcon,
+} from '../yaru/YaruIcon';
 
 interface FileInfo {
   name: string;
@@ -22,7 +29,12 @@ interface ExplorerProps {
 }
 
 export default function Explorer({ onPlayVideo }: ExplorerProps) {
-  const [currentPath, setCurrentPath] = useState('/');
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Read current path from URL — default to /home
+  const currentPath = searchParams.get('path') || '/home';
+
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [drives, setDrives] = useState<DriveInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,29 +135,19 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
     });
   };
 
+  /** Navigate by updating the URL search param — this drives the whole explorer */
   const navigateTo = (path: string) => {
-    setCurrentPath(path);
+    navigate(`/files?path=${encodeURIComponent(path)}`);
   };
 
-  const renderBreadcrumbs = () => {
-    if (currentPath === '/') return <span className="crumb">/</span>;
-    const parts = currentPath.split('/').filter(Boolean);
-    let accum = '';
-    return (
-      <>
-        <span className="crumb" onClick={() => navigateTo('/')}>Root</span>
-        {parts.map((p, idx) => {
-          accum += '/' + p;
-          const target = accum;
-          return (
-            <React.Fragment key={idx}>
-              <span className="separator">/</span>
-              <span className="crumb" onClick={() => navigateTo(target)}>{p}</span>
-            </React.Fragment>
-          );
-        })}
-      </>
-    );
+  const goBack = () => {
+    if (currentPath === '/') return;
+    const parent = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
+    navigateTo(parent);
+  };
+
+  const goHome = () => {
+    navigateTo('/home');
   };
 
   const formatSize = (bytes: number) => {
@@ -156,102 +158,212 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const hasThumbnail = (name: string) => {
+    const ext = name.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'mp4', 'avi', 'mkv', 'webm', 'mov', 'pdf'].includes(ext || '');
+  };
+
+  /** Check if a file is viewable (image or video) */
+  const isViewable = (name: string) => {
+    const ext = name.split('.').pop()?.toLowerCase() || '';
+    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'mp4', 'mkv', 'webm', 'avi', 'mov'].includes(ext);
+  };
+
+  /* ──── Breadcrumb segments from current path ──── */
+  const pathSegments = currentPath === '/'
+    ? [{ label: '/', fullPath: '/' }]
+    : currentPath.split('/').filter(Boolean).reduce<{ label: string; fullPath: string }[]>((acc, part) => {
+        const prev = acc.length > 0 ? acc[acc.length - 1].fullPath : '';
+        acc.push({ label: part, fullPath: prev + '/' + part });
+        return acc;
+      }, []);
+
+  /* ──── Quick-access sidebar items ──── */
+  const quickAccess = [
+    { label: 'Documents', folder: 'Documents' },
+    { label: 'Music',     folder: 'Music' },
+    { label: 'Pictures',  folder: 'Pictures' },
+    { label: 'Videos',    folder: 'Videos' },
+    { label: 'Downloads', folder: 'Downloads' },
+  ];
+
   return (
-    <div className="explorer-container">
-      <div className="header">
-        <h1>Explorer</h1>
-        <div style={{ position: 'relative' }}>
-          <button className="btn">
-            {isUploading ? `Uploading ${uploadProgress}%` : 'Upload File'}
+    <div className="nautilus-root">
+      {/* ──── SIDEBAR ──── */}
+      <aside className="nautilus-sidebar">
+        {/* Main nav */}
+        <div className="sidebar-section">
+          <button
+            className={`sidebar-item ${currentPath === '/' ? 'active' : ''}`}
+            onClick={() => navigateTo('/')}
+          >
+            <img src={getHomeIcon()} alt="" className="sidebar-icon" />
+            <span>Root</span>
           </button>
-          <input 
-            type="file" 
-            onChange={handleUpload}
-            style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }} 
-            disabled={isUploading}
-          />
+          <button
+            className={`sidebar-item ${currentPath.startsWith('/home') && !drives.some(d => currentPath.startsWith(d.mountpoint)) ? 'active' : ''}`}
+            onClick={goHome}
+          >
+            <img src={getFolderIcon('documents')} alt="" className="sidebar-icon" />
+            <span>Home</span>
+          </button>
         </div>
-      </div>
 
-      <div className="glass-panel" style={{ padding: '1rem', marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Mounted Drives</h2>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          {drives.map(d => (
-            <div 
-              key={d.name} 
-              className="btn" 
-              onClick={() => navigateTo(d.mountpoint)}
-              style={{ background: 'rgba(255,255,255,0.1)' }}
+        {/* Quick access folders */}
+        <div className="sidebar-section">
+          {quickAccess.map(qa => (
+            <button
+              key={qa.label}
+              className="sidebar-item"
+              onClick={() => navigateTo('/home')}
             >
-              <span>{d.name} ({d.size})</span>
-            </div>
+              <img src={getFolderIcon(qa.label)} alt="" className="sidebar-icon" />
+              <span>{qa.label}</span>
+            </button>
           ))}
-          {drives.length === 0 && <span style={{ color: 'var(--text-muted)' }}>No extra drives found.</span>}
-        </div>
-      </div>
-
-      <div className="glass-panel" style={{ padding: '1rem', minHeight: '60vh' }}>
-        <div className="breadcrumbs">
-          {renderBreadcrumbs()}
         </div>
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading...</div>
-        ) : (
-          <div className="file-list">
-            {currentPath !== '/' && (
-              <div 
-                className="file-item" 
-                onClick={() => {
-                  const parent = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
-                  navigateTo(parent);
-                }}
-              >
-                <div className="file-icon" style={{ color: 'var(--accent)' }}>⬆️</div>
-                <div className="file-name">..</div>
-              </div>
-            )}
-            {currentPath === '/' && drives.map((d, i) => (
-              <div 
-                key={`drive-${i}`} 
-                className="file-item"
+        {/* Mounted Drives */}
+        {drives.length > 0 && (
+          <div className="sidebar-section">
+            {drives.map(d => (
+              <button
+                key={d.name}
+                className={`sidebar-item ${currentPath.startsWith(d.mountpoint) ? 'active' : ''}`}
                 onClick={() => navigateTo(d.mountpoint)}
               >
-                <div className="file-icon" style={{ color: 'var(--primary)' }}>💾</div>
-                <div className="file-name">
-                  {d.name} <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>({d.mountpoint})</span>
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                  {d.usedSpace && d.totalSpace ? `${d.usedSpace} / ${d.totalSpace} (${d.usedPct})` : d.size}
-                </div>
-              </div>
+                <img src={getDriveUsbIcon()} alt="" className="sidebar-icon sidebar-icon-svg" />
+                <span>{d.name}</span>
+                <span className="sidebar-eject">⏏</span>
+              </button>
             ))}
-            {files.map((f, i) => (
-              <div 
-                key={i} 
-                className="file-item"
-                onClick={() => {
-                  if (f.isDir) navigateTo(f.path);
-                }}
-              >
-                <div className="file-icon">
-                  {f.isDir ? <span style={{color: '#fbbf24'}}>📁</span> : <span style={{color: '#94a3b8'}}>📄</span>}
-                </div>
-                <div className="file-name" title={f.name}>{f.name}</div>
-                {!f.isDir && (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span>{formatSize(f.size)}</span>
-                    <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={(e) => { e.stopPropagation(); downloadFile(f.path); }}>↓</button>
-                    {f.name.endsWith('.mp4') && (
-                      <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: 'var(--accent)' }} onClick={(e) => { e.stopPropagation(); onPlayVideo && onPlayVideo(f.path); }}>▶</button>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-            {files.length === 0 && currentPath === '/' && <span style={{ color: 'var(--text-muted)', gridColumn: '1 / -1' }}>Directory is empty.</span>}
           </div>
         )}
+      </aside>
+
+      {/* ──── MAIN CONTENT ──── */}
+      <div className="nautilus-main">
+        {/* ──── Header bar ──── */}
+        <header className="nautilus-header">
+          <div className="header-left">
+            <button className="header-btn" onClick={goBack} disabled={currentPath === '/'}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M10.354 3.354L9.646 2.646 4.293 8l5.353 5.354.708-.708L5.707 8z"/></svg>
+            </button>
+            <button className="header-btn" onClick={() => {}} disabled>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M5.646 3.354l.708-.708L11.707 8l-5.353 5.354-.708-.708L10.293 8z"/></svg>
+            </button>
+          </div>
+
+          {/* Path / breadcrumb bar */}
+          <div className="nautilus-pathbar">
+            <svg className="pathbar-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="3"/></svg>
+            {pathSegments.map((seg, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <span className="pathbar-sep">/</span>}
+                <button
+                  className={`pathbar-crumb ${i === pathSegments.length - 1 ? 'current' : ''}`}
+                  onClick={() => navigateTo(seg.fullPath)}
+                >
+                  {seg.label}
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
+
+          <div className="header-right">
+            {/* Upload button */}
+            <div style={{ position: 'relative' }}>
+              <button className="header-btn upload-btn">
+                {isUploading ? (
+                  <span style={{ fontSize: '0.75rem' }}>{uploadProgress}%</span>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L4 5h3v6h2V5h3L8 1zM2 13v2h12v-2H2z"/></svg>
+                )}
+              </button>
+              <input 
+                type="file" 
+                onChange={handleUpload}
+                style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }} 
+                disabled={isUploading}
+              />
+            </div>
+          </div>
+        </header>
+
+        {/* ──── File Grid ──── */}
+        <div className="nautilus-content">
+          {loading ? (
+            <div className="nautilus-empty">Loading…</div>
+          ) : (
+            <div className="nautilus-grid">
+              {currentPath !== '/' && (
+                <div className="nautilus-item" onDoubleClick={goBack}>
+                  <div className="nautilus-item-icon">
+                    <img src={getHomeIcon()} alt="Up" />
+                  </div>
+                  <span className="nautilus-item-label">..</span>
+                </div>
+              )}
+
+              {files.map((f, i) => (
+                <div 
+                  key={i} 
+                  className="nautilus-item"
+                  onDoubleClick={() => {
+                    if (f.isDir) {
+                      navigateTo(f.path);
+                    } else if (isViewable(f.name)) {
+                      // Open image/video in viewer
+                      navigate(`/view?path=${encodeURIComponent(f.path)}`);
+                    }
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    if (!f.isDir) downloadFile(f.path);
+                  }}
+                >
+                  <div className="nautilus-item-icon">
+                    {f.isDir ? (
+                      <img src={getFolderIcon(f.name)} alt={f.name} />
+                    ) : hasThumbnail(f.name) ? (
+                      <img
+                        src={`/api/thumbnail?path=${encodeURIComponent(f.path)}&token=${localStorage.getItem('jwt_token')}`}
+                        alt={f.name}
+                        className="nautilus-thumb"
+                        onError={(e) => {
+                          // Fall back to Yaru icon
+                          e.currentTarget.src = getFileIcon(f.name);
+                          e.currentTarget.classList.remove('nautilus-thumb');
+                        }}
+                      />
+                    ) : (
+                      <img src={getFileIcon(f.name)} alt={f.name} />
+                    )}
+                  </div>
+                  <span className="nautilus-item-label" title={f.name}>{f.name}</span>
+
+                  {/* Action buttons overlay on hover */}
+                  {!f.isDir && (
+                    <div className="nautilus-item-actions">
+                      <button onClick={(e) => { e.stopPropagation(); downloadFile(f.path); }} title="Download">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v10l3-3 .7.7L8 12.4 4.3 8.7 5 8l3 3V1zM2 13v2h12v-2H2z"/></svg>
+                      </button>
+                      {(f.name.endsWith('.mp4') || f.name.endsWith('.mkv') || f.name.endsWith('.webm') || f.name.endsWith('.avi') || f.name.endsWith('.mov')) && (
+                        <button onClick={(e) => { e.stopPropagation(); onPlayVideo && onPlayVideo(f.path); }} title="Play">
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6z"/></svg>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {files.length === 0 && currentPath !== '/' && (
+                <div className="nautilus-empty">This folder is empty</div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

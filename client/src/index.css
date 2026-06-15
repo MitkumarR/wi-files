@@ -1,34 +1,44 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Wi-Files  —  Ubuntu Nautilus-inspired dark theme
+   ═══════════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-  --bg-dark: #0f172a;
-  --bg-panel: rgba(30, 41, 59, 0.7);
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --accent: #8b5cf6;
-  --danger: #ef4444;
-  --success: #22c55e;
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  /* Nautilus dark palette */
+  --naut-bg:        #1e1e1e;
+  --naut-sidebar:   #2b2b2b;
+  --naut-header:    #303030;
+  --naut-surface:   #262626;
+  --naut-hover:     rgba(255,255,255,0.06);
+  --naut-active:    rgba(255,255,255,0.10);
+  --naut-border:    rgba(255,255,255,0.08);
+  --naut-text:      #e6e6e6;
+  --naut-text-dim:  #999;
+  --naut-accent:    #3584e4;
+  --naut-accent-hover: #2d73cc;
+  --naut-select:    rgba(53,132,228,0.25);
+
+  /* Legacy vars (keep other pages working) */
+  --bg-dark:        #1e1e1e;
+  --bg-panel:       rgba(43,43,43,0.95);
+  --text-main:      #e6e6e6;
+  --text-muted:     #999;
+  --primary:        #3584e4;
+  --primary-hover:  #2d73cc;
+  --accent:         #8b5cf6;
+  --danger:         #ef4444;
+  --success:        #22c55e;
+  --glass-border:   rgba(255,255,255,0.08);
+  --glass-shadow:   0 4px 24px rgba(0,0,0,0.3);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--bg-dark);
-  color: var(--text-main);
+  font-family: 'Inter', 'Ubuntu', system-ui, -apple-system, sans-serif;
+  background-color: var(--naut-bg);
+  color: var(--naut-text);
   min-height: 100vh;
-  background-image: 
-    radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
-  background-attachment: fixed;
-  display: flex;
-  flex-direction: column;
 }
 
 #root {
@@ -37,17 +47,18 @@ body {
   height: 100vh;
 }
 
-/* Glassmorphism utilities */
+/* ── Glass panel (legacy, keep for dashboard etc.) ───────────────────── */
 .glass-panel {
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
-  border-radius: 16px;
+  border-radius: 12px;
 }
 
-/* App Layout */
+/* ════════════════════════════════════════════════════════════════════════
+   APP LAYOUT  – left nav rail + main content
+   ════════════════════════════════════════════════════════════════════════ */
 .app-container {
   display: flex;
   flex-direction: column;
@@ -58,122 +69,340 @@ body {
 .main-content {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
-  padding-bottom: 5rem; /* Space for mobile nav */
+  padding: 0;   /* Nautilus explorer uses edge-to-edge; other views get padding */
+  padding-bottom: 5rem;
 }
 
-/* Mobile Nav (Bottom) */
+/* Override: non-explorer views still need padding */
+.main-content > .dash-grid,
+.main-content > .explorer-container,
+.main-content > div:not(.nautilus-root) {
+  padding: 1rem;
+}
+
+/* ── Bottom nav (mobile) / Left rail (desktop) ──────────────────────── */
 .mobile-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 4.5rem;
+  bottom: 0; left: 0; right: 0;
+  height: 4rem;
   display: flex;
   justify-content: space-around;
   align-items: center;
   z-index: 1000;
-  border-radius: 20px 20px 0 0;
-  border-bottom: none;
+  border-radius: 0;
+  background: var(--naut-header);
+  border-top: 1px solid var(--naut-border);
 }
 
 .nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  color: var(--text-muted);
-  text-decoration: none;
-  font-size: 0.75rem;
+  gap: 0.2rem;
+  color: var(--naut-text-dim);
+  font-size: 0.7rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0.5rem;
-  border-radius: 12px;
+  transition: color 0.15s;
+  padding: 0.4rem;
+  border-radius: 8px;
 }
+.nav-item:hover { color: var(--naut-text); background: var(--naut-hover); }
+.nav-item.active { color: var(--naut-accent); }
+.nav-icon { width: 22px; height: 22px; }
 
-.nav-item:hover {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.nav-item.active {
-  color: var(--primary);
-}
-
-.nav-icon {
-  width: 24px;
-  height: 24px;
-}
-
-/* Desktop overrides */
 @media (min-width: 768px) {
-  .app-container {
-    flex-direction: row;
-  }
+  .app-container { flex-direction: row; }
   .mobile-nav {
     position: static;
     flex-direction: column;
     justify-content: flex-start;
-    width: 5rem;
+    width: 4.5rem;
     height: 100%;
     border-radius: 0;
-    border-right: 1px solid var(--glass-border);
-    padding-top: 2rem;
-    gap: 1.5rem;
+    border-right: 1px solid var(--naut-border);
+    border-top: none;
+    padding-top: 1.5rem;
+    gap: 1rem;
   }
-  .main-content {
-    padding-bottom: 1rem;
-  }
-  .nav-item {
-    width: 3.5rem;
-    height: 3.5rem;
-    justify-content: center;
-  }
+  .main-content { padding-bottom: 0; }
+  .nav-item { width: 3rem; height: 3rem; justify-content: center; }
 }
 
-/* Components */
-.header {
+/* ════════════════════════════════════════════════════════════════════════
+   NAUTILUS — Explorer Layout
+   ════════════════════════════════════════════════════════════════════════ */
+.nautilus-root {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
+.nautilus-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--naut-sidebar);
+  border-right: 1px solid var(--naut-border);
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--naut-border);
+}
+.sidebar-section:last-child { border-bottom: none; }
+
+.sidebar-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(to right, #60a5fa, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Buttons */
-.btn {
-  background: var(--primary);
-  color: white;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
+  background: transparent;
+  color: var(--naut-text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
+  transition: background 0.12s;
+  text-align: left;
+}
+.sidebar-item:hover { background: var(--naut-hover); }
+.sidebar-item.active { background: var(--naut-active); }
+
+.sidebar-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.sidebar-icon-svg {
+  /* SVG symbolic icons need to be tinted */
+  filter: invert(1) brightness(0.85);
+}
+
+.sidebar-eject {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--naut-text-dim);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.sidebar-item:hover .sidebar-eject { opacity: 1; }
+
+/* ── Main column ─────────────────────────────────────────────────────── */
+.nautilus-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--naut-bg);
+}
+
+/* ── Header bar ──────────────────────────────────────────────────────── */
+.nautilus-header {
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--naut-header);
+  border-bottom: 1px solid var(--naut-border);
+  flex-shrink: 0;
+  min-height: 44px;
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--naut-text);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.header-btn:hover { background: var(--naut-hover); }
+.header-btn:disabled { opacity: 0.35; cursor: default; }
+.header-btn:disabled:hover { background: transparent; }
+
+.upload-btn {
+  background: var(--naut-hover);
+}
+
+/* ── Path bar / breadcrumbs ──────────────────────────────────────────── */
+.nautilus-pathbar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  overflow-x: auto;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.pathbar-icon {
+  color: var(--naut-text-dim);
+  margin-right: 0.3rem;
+  flex-shrink: 0;
+}
+.pathbar-sep {
+  color: var(--naut-text-dim);
+  font-size: 0.8rem;
+  margin: 0 0.15rem;
+}
+.pathbar-crumb {
+  border: none;
+  background: none;
+  color: var(--naut-text-dim);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.pathbar-crumb:hover { background: var(--naut-hover); color: var(--naut-text); }
+.pathbar-crumb.current { color: var(--naut-text); font-weight: 500; }
+
+/* ── Content area (file grid) ────────────────────────────────────────── */
+.nautilus-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.nautilus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 0.5rem;
 }
 
-.btn:hover {
-  background: var(--primary-hover);
-  transform: translateY(-2px);
+.nautilus-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 0.3rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+}
+.nautilus-item:hover { background: var(--naut-hover); }
+.nautilus-item:active { background: var(--naut-select); }
+
+.nautilus-item-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nautilus-item-icon img {
+  max-width: 64px;
+  max-height: 64px;
+  object-fit: contain;
+}
+.nautilus-item-icon img.nautilus-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
 }
 
-/* List / Grid */
+.nautilus-item-label {
+  font-size: 0.78rem;
+  text-align: center;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+  color: var(--naut-text);
+  max-width: 90px;
+}
+
+/* Action overlay on hover */
+.nautilus-item-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: none;
+  gap: 2px;
+}
+.nautilus-item:hover .nautilus-item-actions { display: flex; }
+.nautilus-item-actions button {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  border: none;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.nautilus-item-actions button:hover { background: var(--naut-accent); }
+
+.nautilus-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem;
+  color: var(--naut-text-dim);
+  font-size: 0.95rem;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   BUTTONS (global)
+   ════════════════════════════════════════════════════════════════════════ */
+.btn {
+  background: var(--naut-accent);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: inherit;
+}
+.btn:hover { background: var(--naut-accent-hover); }
+
+/* ════════════════════════════════════════════════════════════════════════
+   LEGACY — File-list grid (for other views if still used)
+   ════════════════════════════════════════════════════════════════════════ */
 .file-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 1rem;
 }
-
 .file-item {
   display: flex;
   flex-direction: column;
@@ -182,22 +411,12 @@ h1 {
   padding: 1rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.15s;
 }
-
-.file-item:hover {
-  transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.file-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.75rem;
-}
-
+.file-item:hover { background: var(--naut-hover); }
+.file-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
 .file-name {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   word-break: break-word;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -205,7 +424,7 @@ h1 {
   overflow: hidden;
 }
 
-/* Breadcrumbs */
+/* ── Breadcrumbs (legacy) ──────────────────────────────────────────── */
 .breadcrumbs {
   display: flex;
   align-items: center;
@@ -213,88 +432,155 @@ h1 {
   margin-bottom: 1.5rem;
   overflow-x: auto;
   white-space: nowrap;
-  padding-bottom: 0.5rem;
+}
+.crumb { color: var(--naut-accent); cursor: pointer; }
+.crumb:hover { text-decoration: underline; }
+.separator { color: var(--naut-text-dim); }
+
+/* ── Header (legacy) ──────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(to right, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.crumb {
-  color: var(--primary);
-  cursor: pointer;
-}
-
-.crumb:hover {
-  text-decoration: underline;
-}
-
-.separator {
-  color: var(--text-muted);
-}
-
-/* Dashboard Cards */
+/* ════════════════════════════════════════════════════════════════════════
+   DASHBOARD
+   ════════════════════════════════════════════════════════════════════════ */
 .dash-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
 }
-
 .stat-card {
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-
 .stat-title {
-  color: var(--text-muted);
-  font-size: 0.875rem;
+  color: var(--naut-text-dim);
+  font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text-main);
+  color: var(--naut-text);
 }
 
-/* Auth */
+/* ════════════════════════════════════════════════════════════════════════
+   AUTH
+   ════════════════════════════════════════════════════════════════════════ */
 .auth-container {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100vh;
   width: 100vw;
+  background: var(--naut-bg);
 }
-
 .auth-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
   padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
-
 .input-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-
 .input-group label {
-  font-size: 0.875rem;
-  color: var(--text-muted);
+  font-size: 0.85rem;
+  color: var(--naut-text-dim);
 }
-
 .input-group input {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--glass-border);
-  padding: 0.75rem;
-  border-radius: 8px;
-  color: var(--text-main);
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--naut-border);
+  padding: 0.7rem;
+  border-radius: 6px;
+  color: var(--naut-text);
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.input-group input:focus {
+  border-color: var(--naut-accent);
 }
 
-.input-group input:focus {
-  border-color: var(--primary);
+/* ════════════════════════════════════════════════════════════════════════
+   RESPONSIVE – hide sidebar on small screens
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .nautilus-sidebar { display: none; }
+  .nautilus-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+  .nautilus-item-icon { width: 48px; height: 48px; }
+  .nautilus-item-icon img { max-width: 48px; max-height: 48px; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   FILE VIEWER (image / video preview)
+   ════════════════════════════════════════════════════════════════════════ */
+.viewer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #000;
+}
+
+.viewer-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--naut-header);
+  border-bottom: 1px solid var(--naut-border);
+  flex-shrink: 0;
+}
+
+.viewer-filename {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--naut-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewer-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.viewer-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.viewer-video {
+  width: 100%;
+  max-width: 960px;
+  max-height: 100%;
+  border-radius: 8px;
+  outline: none;
 }

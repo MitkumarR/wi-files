@@ -40,7 +40,7 @@ func securityMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			}
 			restricted := []string{"/proc", "/sys", "/dev", "/run"}
 			for _, prefix := range restricted {
-				if strings.HasPrefix(pathParam, prefix) {
+				if strings.HasPrefix(pathParam, prefix) && !strings.HasPrefix(pathParam, "/run/media") {
 					http.Error(w, "Access to restricted directory denied", http.StatusForbidden)
 					return
 				}
@@ -91,6 +91,7 @@ func main() {
 	// corsMiddleware should be outermost so CORS headers are added even on 401/403
 	http.HandleFunc("/api/files", corsMiddleware(securityMiddleware(files.HandleFiles)))
 	http.HandleFunc("/api/download", corsMiddleware(securityMiddleware(files.HandleDownload)))
+	http.HandleFunc("/api/thumbnail", corsMiddleware(securityMiddleware(files.HandleThumbnail)))
 	http.HandleFunc("/api/upload", corsMiddleware(securityMiddleware(files.HandleUpload)))
 	http.HandleFunc("/api/drives", corsMiddleware(securityMiddleware(drives.HandleDrives)))
 	http.HandleFunc("/api/monitor", corsMiddleware(securityMiddleware(monitor.HandleStats)))

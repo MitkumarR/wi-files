@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os/exec"
+	"strings"
 )
 
 type BlockDevice struct {
@@ -30,7 +31,7 @@ type DriveInfo struct {
 func extractDrives(devices []BlockDevice) []DriveInfo {
 	var drives []DriveInfo
 	for _, dev := range devices {
-		if dev.Type != "loop" && dev.Mountpoint != nil && *dev.Mountpoint != "" {
+		if dev.Type != "loop" && !strings.HasPrefix(dev.Name, "nvme") && dev.Mountpoint != nil && *dev.Mountpoint != "" {
 			used := ""
 			if dev.FsUsed != nil {
 				used = *dev.FsUsed
