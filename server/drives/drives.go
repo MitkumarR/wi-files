@@ -9,6 +9,7 @@ import (
 
 type BlockDevice struct {
 	Name       string        `json:"name"`
+	Label      *string       `json:"label"`
 	Mountpoint *string       `json:"mountpoint"`
 	Size       string        `json:"size"`
 	Type       string        `json:"type"`
@@ -32,6 +33,11 @@ func extractDrives(devices []BlockDevice) []DriveInfo {
 	var drives []DriveInfo
 	for _, dev := range devices {
 		if dev.Type != "loop" && !strings.HasPrefix(dev.Name, "nvme") && dev.Mountpoint != nil && *dev.Mountpoint != "" {
+			displayName := dev.Name
+			if dev.Label != nil && *dev.Label != "" {
+				displayName = *dev.Label
+			}
+			
 			used := ""
 			if dev.FsUsed != nil {
 				used = *dev.FsUsed
@@ -46,7 +52,7 @@ func extractDrives(devices []BlockDevice) []DriveInfo {
 			}
 			
 			drives = append(drives, DriveInfo{
-				Name:       dev.Name,
+				Name:       displayName,
 				Mountpoint: *dev.Mountpoint,
 				Size:       dev.Size,
 				Type:       dev.Type,
@@ -63,7 +69,7 @@ func extractDrives(devices []BlockDevice) []DriveInfo {
 }
 
 func HandleDrives(w http.ResponseWriter, r *http.Request) {
-	cmd := exec.Command("lsblk", "-J", "-o", "NAME,MOUNTPOINT,SIZE,TYPE,FSUSED,FSSIZE,FSUSE%")
+	cmd := exec.Command("lsblk", "-J", "-o", "NAME,LABEL,MOUNTPOINT,SIZE,TYPE,FSUSED,FSSIZE,FSUSE%")
 	output, err := cmd.Output()
 	if err != nil {
 		http.Error(w, "Failed to detect drives", http.StatusInternalServerError)

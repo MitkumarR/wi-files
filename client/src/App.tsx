@@ -77,36 +77,7 @@ function App() {
       <Route path="/*" element={
         <RequireAuth>
           <div className="app-container">
-            {/* Navigation rail */}
-            <nav className="glass-panel mobile-nav">
-              <div
-                className={`nav-item ${location.pathname === '/files' ? 'active' : ''}`}
-                onClick={() => navigate('/files?path=/home')}
-              >
-                <svg className="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                </svg>
-                <span>Files</span>
-              </div>
-              <div
-                className={`nav-item ${location.pathname === '/dashboard' ? 'active' : ''}`}
-                onClick={() => navigate('/dashboard')}
-              >
-                <svg className="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                </svg>
-                <span>Dash</span>
-              </div>
-              <div
-                className="nav-item"
-                onClick={handleLogout}
-              >
-                <svg className="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                </svg>
-                <span>Logout</span>
-              </div>
-            </nav>
+
 
             {/* Main Content Area */}
             <main className="main-content">

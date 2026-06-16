@@ -4,7 +4,8 @@ import {
   getFolderIcon,
   getFileIcon,
   getHomeIcon,
-  getDriveUsbIcon,
+  getDriveSystemIcon,
+  getSidebarIcon,
 } from '../yaru/YaruIcon';
 
 interface FileInfo {
@@ -38,6 +39,8 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [drives, setDrives] = useState<DriveInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMountsOpen, setMobileMountsOpen] = useState(false);
 
   useEffect(() => {
     fetchDrives();
@@ -141,9 +144,11 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
   };
 
   const goBack = () => {
-    if (currentPath === '/') return;
-    const parent = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
-    navigateTo(parent);
+    navigate(-1);
+  };
+
+  const goForward = () => {
+    navigate(1);
   };
 
   const goHome = () => {
@@ -169,14 +174,61 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
     return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'mp4', 'mkv', 'webm', 'avi', 'mov'].includes(ext);
   };
 
-  /* ──── Breadcrumb segments from current path ──── */
-  const pathSegments = currentPath === '/'
-    ? [{ label: '/', fullPath: '/' }]
-    : currentPath.split('/').filter(Boolean).reduce<{ label: string; fullPath: string }[]>((acc, part) => {
-        const prev = acc.length > 0 ? acc[acc.length - 1].fullPath : '';
-        acc.push({ label: part, fullPath: prev + '/' + part });
-        return acc;
-      }, []);
+  /* ──── Pathbar Context & Breadcrumbs ──── */
+  let pathbarIcon = getSidebarIcon('home');
+  let rootLabel = '';
+  let rootPath = '';
+  let remainingPath = currentPath;
+
+  if (currentPath === '/starred') {
+    pathbarIcon = getSidebarIcon('starred');
+    rootLabel = 'Starred';
+    rootPath = '/starred';
+    remainingPath = '';
+  } else if (currentPath === '/network') {
+    pathbarIcon = getSidebarIcon('network');
+    rootLabel = 'Network';
+    rootPath = '/network';
+    remainingPath = '';
+  } else if (currentPath === '/trash') {
+    pathbarIcon = getSidebarIcon('trash');
+    rootLabel = 'Trash';
+    rootPath = '/trash';
+    remainingPath = '';
+  } else {
+    // Check if it's a mounted drive
+    const drive = drives.find(d => currentPath.startsWith(d.mountpoint));
+    if (drive) {
+      pathbarIcon = getDriveSystemIcon();
+      rootLabel = drive.name;
+      rootPath = drive.mountpoint;
+      remainingPath = currentPath.substring(drive.mountpoint.length);
+    } else if (currentPath.startsWith('/home')) {
+      pathbarIcon = getSidebarIcon('home');
+      rootLabel = 'Home';
+      rootPath = '/home';
+      remainingPath = currentPath.substring('/home'.length);
+    } else {
+      pathbarIcon = getDriveSystemIcon(); // Fallback system icon
+      rootLabel = '/';
+      rootPath = '/';
+      remainingPath = currentPath === '/' ? '' : currentPath;
+    }
+  }
+
+  // Build breadcrumb segments
+  let pathSegments: { label: string; fullPath: string }[] = [];
+  if (rootLabel) {
+    pathSegments.push({ label: rootLabel, fullPath: rootPath });
+  }
+  if (remainingPath && remainingPath !== '/') {
+    const parts = remainingPath.split('/').filter(Boolean);
+    let currentAcc = rootPath;
+    for (const part of parts) {
+      currentAcc = currentAcc.endsWith('/') ? currentAcc + part : currentAcc + '/' + part;
+      pathSegments.push({ label: part, fullPath: currentAcc });
+    }
+  }
 
   /* ──── Quick-access sidebar items ──── */
   const quickAccess = [
@@ -194,18 +246,32 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
         {/* Main nav */}
         <div className="sidebar-section">
           <button
-            className={`sidebar-item ${currentPath === '/' ? 'active' : ''}`}
-            onClick={() => navigateTo('/')}
+            className={`sidebar-item ${currentPath === '/starred' ? 'active' : ''}`}
+            onClick={() => navigateTo('/starred')}
           >
-            <img src={getHomeIcon()} alt="" className="sidebar-icon" />
-            <span>Root</span>
+            <img src={getSidebarIcon('starred')} alt="" className="sidebar-icon" />
+            <span>Starred</span>
           </button>
           <button
             className={`sidebar-item ${currentPath.startsWith('/home') && !drives.some(d => currentPath.startsWith(d.mountpoint)) ? 'active' : ''}`}
             onClick={goHome}
           >
-            <img src={getFolderIcon('documents')} alt="" className="sidebar-icon" />
+            <img src={getSidebarIcon('home')} alt="" className="sidebar-icon" />
             <span>Home</span>
+          </button>
+          <button
+            className={`sidebar-item ${currentPath === '/network' ? 'active' : ''}`}
+            onClick={() => navigateTo('/network')}
+          >
+            <img src={getSidebarIcon('network')} alt="" className="sidebar-icon" />
+            <span>Network</span>
+          </button>
+          <button
+            className={`sidebar-item ${currentPath === '/trash' ? 'active' : ''}`}
+            onClick={() => navigateTo('/trash')}
+          >
+            <img src={getSidebarIcon('trash')} alt="" className="sidebar-icon" />
+            <span>Trash</span>
           </button>
         </div>
 
@@ -217,7 +283,7 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
               className="sidebar-item"
               onClick={() => navigateTo('/home')}
             >
-              <img src={getFolderIcon(qa.label)} alt="" className="sidebar-icon" />
+              <img src={getSidebarIcon(qa.label)} alt="" className="sidebar-icon" />
               <span>{qa.label}</span>
             </button>
           ))}
@@ -232,13 +298,28 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
                 className={`sidebar-item ${currentPath.startsWith(d.mountpoint) ? 'active' : ''}`}
                 onClick={() => navigateTo(d.mountpoint)}
               >
-                <img src={getDriveUsbIcon()} alt="" className="sidebar-icon sidebar-icon-svg" />
+                <img src={getDriveSystemIcon()} alt="" className="sidebar-icon sidebar-icon-svg" />
                 <span>{d.name}</span>
                 <span className="sidebar-eject">⏏</span>
               </button>
             ))}
           </div>
         )}
+
+        {/* Logout Section */}
+        <div className="sidebar-section" style={{ marginTop: 'auto' }}>
+          <button
+            className="sidebar-item"
+            onClick={() => {
+              localStorage.removeItem('jwt_token');
+              window.location.href = '/auth/login';
+            }}
+          >
+            <img src={getSidebarIcon('logout')} alt="" className="sidebar-icon" />
+            <span>Logout</span>
+          </button>
+        </div>
+
       </aside>
 
       {/* ──── MAIN CONTENT ──── */}
@@ -246,17 +327,17 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
         {/* ──── Header bar ──── */}
         <header className="nautilus-header">
           <div className="header-left">
-            <button className="header-btn" onClick={goBack} disabled={currentPath === '/'}>
+            <button className="header-btn" onClick={goBack}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M10.354 3.354L9.646 2.646 4.293 8l5.353 5.354.708-.708L5.707 8z"/></svg>
             </button>
-            <button className="header-btn" onClick={() => {}} disabled>
+            <button className="header-btn" onClick={goForward}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M5.646 3.354l.708-.708L11.707 8l-5.353 5.354-.708-.708L10.293 8z"/></svg>
             </button>
           </div>
 
           {/* Path / breadcrumb bar */}
           <div className="nautilus-pathbar">
-            <svg className="pathbar-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="3"/></svg>
+            <img src={pathbarIcon} alt="" className="sidebar-icon" style={{ opacity: 0.8 }} />
             {pathSegments.map((seg, i) => (
               <React.Fragment key={i}>
                 {i > 0 && <span className="pathbar-sep">/</span>}
@@ -296,14 +377,6 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
             <div className="nautilus-empty">Loading…</div>
           ) : (
             <div className="nautilus-grid">
-              {currentPath !== '/' && (
-                <div className="nautilus-item" onDoubleClick={goBack}>
-                  <div className="nautilus-item-icon">
-                    <img src={getHomeIcon()} alt="Up" />
-                  </div>
-                  <span className="nautilus-item-label">..</span>
-                </div>
-              )}
 
               {files.map((f, i) => (
                 <div 
@@ -365,6 +438,101 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
           )}
         </div>
       </div>
+
+      {/* ──── MOBILE BOTTOM NAV ──── */}
+      <nav className="mobile-bottom-nav">
+        <button
+          className={`mobile-nav-tab ${currentPath.startsWith('/home') && !drives.some(d => currentPath.startsWith(d.mountpoint)) ? 'active' : ''}`}
+          onClick={() => { setMobileMenuOpen(false); setMobileMountsOpen(false); goHome(); }}
+        >
+          <img src={getSidebarIcon('home')} alt="" className="mobile-nav-icon" />
+          <span>Home</span>
+        </button>
+        <button
+          className={`mobile-nav-tab ${mobileMountsOpen ? 'active' : ''}`}
+          onClick={() => { setMobileMenuOpen(false); setMobileMountsOpen(!mobileMountsOpen); }}
+        >
+          <img src={getSidebarIcon('mounts')} alt="" className="mobile-nav-icon" />
+          <span>Mounts</span>
+        </button>
+        <button
+          className={`mobile-nav-tab ${currentPath === '/starred' ? 'active' : ''}`}
+          onClick={() => { setMobileMenuOpen(false); setMobileMountsOpen(false); navigateTo('/starred'); }}
+        >
+          <img src={getSidebarIcon('starred')} alt="" className="mobile-nav-icon" />
+          <span>Starred</span>
+        </button>
+        <button
+          className={`mobile-nav-tab ${mobileMenuOpen ? 'active' : ''}`}
+          onClick={() => { setMobileMountsOpen(false); setMobileMenuOpen(!mobileMenuOpen); }}
+        >
+          <img src={getSidebarIcon('menu')} alt="" className="mobile-nav-icon" />
+          <span>Menu</span>
+        </button>
+      </nav>
+
+      {/* ──── MOBILE MOUNTS POPUP ──── */}
+      {mobileMountsOpen && (
+        <div className="mobile-popup-overlay" onClick={() => setMobileMountsOpen(false)}>
+          <div className="mobile-popup" onClick={e => e.stopPropagation()}>
+            <div className="mobile-popup-title">Mounted Drives</div>
+            {drives.length === 0 ? (
+              <div className="mobile-popup-empty">No drives mounted</div>
+            ) : (
+              drives.map(d => (
+                <button
+                  key={d.name}
+                  className="sidebar-item"
+                  onClick={() => { setMobileMountsOpen(false); navigateTo(d.mountpoint); }}
+                >
+                  <img src={getDriveSystemIcon()} alt="" className="sidebar-icon" />
+                  <span>{d.name}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--naut-text-dim)' }}>{d.size}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ──── MOBILE MENU POPUP ──── */}
+      {mobileMenuOpen && (
+        <div className="mobile-popup-overlay" onClick={() => setMobileMenuOpen(false)}>
+          <div className="mobile-popup" onClick={e => e.stopPropagation()}>
+            <div className="mobile-popup-title">Menu</div>
+            <button className="sidebar-item" onClick={() => { setMobileMenuOpen(false); navigateTo('/network'); }}>
+              <img src={getSidebarIcon('network')} alt="" className="sidebar-icon" />
+              <span>Network</span>
+            </button>
+            <button className="sidebar-item" onClick={() => { setMobileMenuOpen(false); navigateTo('/trash'); }}>
+              <img src={getSidebarIcon('trash')} alt="" className="sidebar-icon" />
+              <span>Trash</span>
+            </button>
+            {quickAccess.map(qa => (
+              <button
+                key={qa.label}
+                className="sidebar-item"
+                onClick={() => { setMobileMenuOpen(false); navigateTo('/home'); }}
+              >
+                <img src={getSidebarIcon(qa.label)} alt="" className="sidebar-icon" />
+                <span>{qa.label}</span>
+              </button>
+            ))}
+            <div style={{ borderTop: '1px solid var(--naut-border)', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
+              <button
+                className="sidebar-item"
+                onClick={() => {
+                  localStorage.removeItem('jwt_token');
+                  window.location.href = '/auth/login';
+                }}
+              >
+                <img src={getSidebarIcon('logout')} alt="" className="sidebar-icon" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
