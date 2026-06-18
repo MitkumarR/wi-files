@@ -1,9 +1,8 @@
-<h3 align="center">
-  <img src="logo/WiFiles/wifiles-logo.png" alt="WiFiles Logo" width="48" style="border-radius: 50%; vertical-align: middle; margin-right: 10px;" />
-  <span style="font-family: 'Ubuntu', sans-serif; vertical-align: middle; font-size: 1.3em;">WiFiles</span>
-</h3>
+<p align="center">
+  <img src="logo/WiFiles/wifiles-blue.svg" alt="WiFiles Logo" width="200" />
+</p>
 
-**wi-files** is a self-hosted private file server that brings the familiar, polished experience of the Ubuntu GNOME Nautilus file manager to your web browser. 
+**Wi-Files** is a self-hosted private file server that brings the familiar, polished experience of the Ubuntu GNOME Nautilus file manager to your web browser. 
 
 ## Features
 

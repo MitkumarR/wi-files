@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import './index.css';
 import Explorer from './explorer/Explorer';
-import Dashboard from './dashboard/Dashboard';
 import Auth from './auth/Auth';
-import Player from './player/Player';
+
 import FileViewer from './viewer/FileViewer';
 
 /** Check if we have a valid (non-expired) JWT in localStorage */
@@ -83,7 +82,6 @@ function App() {
             <main className="main-content">
               <Routes>
                 <Route path="/files" element={<Explorer onPlayVideo={handlePlayVideo} />} />
-                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/view" element={<FileViewer />} />
                 <Route path="*" element={<Navigate to="/files?path=/home" replace />} />
               </Routes>

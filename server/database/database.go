@@ -5,7 +5,6 @@ import (
 	"log"
 
 	_ "github.com/mattn/go-sqlite3"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var DB *sql.DB
@@ -37,33 +36,11 @@ func createTables() {
 	);
 	CREATE INDEX IF NOT EXISTS idx_filename ON files_index(filename);
 	CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_path ON files_index(path);
-
-	CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		username TEXT UNIQUE NOT NULL,
-		password_hash TEXT NOT NULL,
-		role TEXT NOT NULL
-	);
 	`
 
 	_, err := DB.Exec(query)
 	if err != nil {
 		log.Fatalf("Failed to create tables: %v", err)
-	}
-
-	// Insert default admin if not exists (password: 'admin')
-	var count int
-	DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'admin'").Scan(&count)
-	if count == 0 {
-		hashBytes, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
-		if err == nil {
-			_, err = DB.Exec("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)", "admin", string(hashBytes), "admin")
-			if err != nil {
-				log.Printf("Failed to insert default admin: %v", err)
-			} else {
-				log.Println("Created default admin user.")
-			}
-		}
 	}
 
 	log.Println("Database initialized successfully.")

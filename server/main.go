@@ -9,7 +9,6 @@ import (
 	"wifiles-server/database"
 	"wifiles-server/drives"
 	"wifiles-server/files"
-	"wifiles-server/monitor"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -47,8 +46,10 @@ func securityMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 
-		// 2. JWT Verification (skip for login)
-		if r.URL.Path == "/api/auth/login" {
+		// 2. JWT Verification (skip for auth endpoints)
+		if r.URL.Path == "/api/auth/login" ||
+			r.URL.Path == "/api/auth/users" ||
+			r.URL.Path == "/api/auth/avatar" {
 			next(w, r)
 			return
 		}
@@ -94,8 +95,9 @@ func main() {
 	http.HandleFunc("/api/thumbnail", corsMiddleware(securityMiddleware(files.HandleThumbnail)))
 	http.HandleFunc("/api/upload", corsMiddleware(securityMiddleware(files.HandleUpload)))
 	http.HandleFunc("/api/drives", corsMiddleware(securityMiddleware(drives.HandleDrives)))
-	http.HandleFunc("/api/monitor", corsMiddleware(securityMiddleware(monitor.HandleStats)))
 	http.HandleFunc("/api/auth/login", corsMiddleware(securityMiddleware(auth.HandleLogin)))
+	http.HandleFunc("/api/auth/users", corsMiddleware(securityMiddleware(auth.HandleUsers)))
+	http.HandleFunc("/api/auth/avatar", corsMiddleware(securityMiddleware(auth.HandleUserAvatar)))
 
 	log.Println("Wi-File Backend running on http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
