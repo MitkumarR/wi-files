@@ -74,7 +74,7 @@ func generateImageThumbnail(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	thumbImage := imaging.Thumbnail(srcImage, 200, 200, imaging.Lanczos)
+	thumbImage := imaging.Fit(srcImage, 200, 200, imaging.Lanczos)
 	var buf bytes.Buffer
 	err = imaging.Encode(&buf, thumbImage, imaging.JPEG)
 	return buf.Bytes(), err

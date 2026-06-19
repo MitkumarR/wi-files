@@ -29,12 +29,26 @@ interface ExplorerProps {
   onPlayVideo?: (path: string) => void;
 }
 
+/** Extract user's home directory from the JWT token */
+function getUserHome(): string {
+  try {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) return '/home';
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.homeDir || '/home';
+  } catch {
+    return '/home';
+  }
+}
+
 export default function Explorer({ onPlayVideo }: ExplorerProps) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Read current path from URL — default to /home
-  const currentPath = searchParams.get('path') || '/home';
+  const userHome = getUserHome(); // e.g. /home/mit
+
+  // Read current path from URL — default to user's home
+  const currentPath = searchParams.get('path') || userHome;
 
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [drives, setDrives] = useState<DriveInfo[]>([]);
@@ -89,23 +103,23 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
-    
+
     const formData = new FormData();
     formData.append('file', file);
-    
+
     setIsUploading(true);
     setUploadProgress(0);
-    
+
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `/api/upload?path=${encodeURIComponent(currentPath)}`);
     xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('jwt_token')}`);
-    
+
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         setUploadProgress(Math.round((event.loaded * 100) / event.total));
       }
     };
-    
+
     xhr.onload = () => {
       setIsUploading(false);
       setUploadProgress(0);
@@ -117,7 +131,7 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
         alert('Upload failed: ' + xhr.responseText);
       }
     };
-    
+
     xhr.send(formData);
   };
 
@@ -125,17 +139,17 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
     fetch(`/api/download?path=${encodeURIComponent(path)}`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
     })
-    .then(res => res.blob())
-    .then(blob => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = path.split('/').pop() || 'download';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    });
+      .then(res => res.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = path.split('/').pop() || 'download';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      });
   };
 
   /** Navigate by updating the URL search param — this drives the whole explorer */
@@ -152,7 +166,7 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
   };
 
   const goHome = () => {
-    navigateTo('/home');
+    navigateTo(userHome);
   };
 
   const formatSize = (bytes: number) => {
@@ -173,6 +187,26 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
     const ext = name.split('.').pop()?.toLowerCase() || '';
     return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'mp4', 'mkv', 'webm', 'avi', 'mov'].includes(ext);
   };
+
+  /* ──── Quick-access sidebar items ──── */
+  const quickAccess = [
+    { label: 'Documents', folder: 'Documents' },
+    { label: 'Music', folder: 'Music' },
+    { label: 'Pictures', folder: 'Pictures' },
+    { label: 'Videos', folder: 'Videos' },
+    { label: 'Downloads', folder: 'Downloads' },
+  ];
+
+  /** Check if user is browsing inside a specific quick-access folder */
+  const isInQuickAccess = (folder: string) => {
+    const folderPath = `${userHome}/${folder}`;
+    return currentPath === folderPath || currentPath.startsWith(folderPath + '/');
+  };
+
+  /** Check if we're in the home tree but NOT inside a quick-access subfolder */
+  const isInHome = currentPath.startsWith(userHome) &&
+    !drives.some(d => currentPath.startsWith(d.mountpoint)) &&
+    !quickAccess.some(qa => isInQuickAccess(qa.folder));
 
   /* ──── Pathbar Context & Breadcrumbs ──── */
   let pathbarIcon = getSidebarIcon('home');
@@ -203,13 +237,22 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
       rootLabel = drive.name;
       rootPath = drive.mountpoint;
       remainingPath = currentPath.substring(drive.mountpoint.length);
-    } else if (currentPath.startsWith('/home')) {
-      pathbarIcon = getSidebarIcon('home');
-      rootLabel = 'Home';
-      rootPath = '/home';
-      remainingPath = currentPath.substring('/home'.length);
+    } else if (currentPath.startsWith(userHome)) {
+      // Check if inside a quick-access folder
+      const matchedQA = quickAccess.find(qa => isInQuickAccess(qa.folder));
+      if (matchedQA) {
+        pathbarIcon = getSidebarIcon(matchedQA.label);
+        rootLabel = matchedQA.label;
+        rootPath = `${userHome}/${matchedQA.folder}`;
+        remainingPath = currentPath.substring(rootPath.length);
+      } else {
+        pathbarIcon = getSidebarIcon('home');
+        rootLabel = 'Home';
+        rootPath = userHome;
+        remainingPath = currentPath.substring(userHome.length);
+      }
     } else {
-      pathbarIcon = getDriveSystemIcon(); // Fallback system icon
+      pathbarIcon = getDriveSystemIcon();
       rootLabel = '/';
       rootPath = '/';
       remainingPath = currentPath === '/' ? '' : currentPath;
@@ -230,15 +273,6 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
     }
   }
 
-  /* ──── Quick-access sidebar items ──── */
-  const quickAccess = [
-    { label: 'Documents', folder: 'Documents' },
-    { label: 'Music',     folder: 'Music' },
-    { label: 'Pictures',  folder: 'Pictures' },
-    { label: 'Videos',    folder: 'Videos' },
-    { label: 'Downloads', folder: 'Downloads' },
-  ];
-
   return (
     <div className="nautilus-root">
       {/* ──── SIDEBAR ──── */}
@@ -246,18 +280,18 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
         {/* Main nav */}
         <div className="sidebar-section">
           <button
+            className={`sidebar-item ${isInHome ? 'active' : ''}`}
+            onClick={goHome}
+          >
+            <img src={getSidebarIcon('home')} alt="" className="sidebar-icon" />
+            <span>Home</span>
+          </button>
+          <button
             className={`sidebar-item ${currentPath === '/starred' ? 'active' : ''}`}
             onClick={() => navigateTo('/starred')}
           >
             <img src={getSidebarIcon('starred')} alt="" className="sidebar-icon" />
             <span>Starred</span>
-          </button>
-          <button
-            className={`sidebar-item ${currentPath.startsWith('/home') && !drives.some(d => currentPath.startsWith(d.mountpoint)) ? 'active' : ''}`}
-            onClick={goHome}
-          >
-            <img src={getSidebarIcon('home')} alt="" className="sidebar-icon" />
-            <span>Home</span>
           </button>
           <button
             className={`sidebar-item ${currentPath === '/network' ? 'active' : ''}`}
@@ -280,8 +314,8 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
           {quickAccess.map(qa => (
             <button
               key={qa.label}
-              className="sidebar-item"
-              onClick={() => navigateTo('/home')}
+              className={`sidebar-item ${isInQuickAccess(qa.folder) ? 'active' : ''}`}
+              onClick={() => navigateTo(`${userHome}/${qa.folder}`)}
             >
               <img src={getSidebarIcon(qa.label)} alt="" className="sidebar-icon" />
               <span>{qa.label}</span>
@@ -328,10 +362,10 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
         <header className="nautilus-header">
           <div className="header-left">
             <button className="header-btn" onClick={goBack}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M10.354 3.354L9.646 2.646 4.293 8l5.353 5.354.708-.708L5.707 8z"/></svg>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M10.354 3.354L9.646 2.646 4.293 8l5.353 5.354.708-.708L5.707 8z" /></svg>
             </button>
             <button className="header-btn" onClick={goForward}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M5.646 3.354l.708-.708L11.707 8l-5.353 5.354-.708-.708L10.293 8z"/></svg>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M5.646 3.354l.708-.708L11.707 8l-5.353 5.354-.708-.708L10.293 8z" /></svg>
             </button>
           </div>
 
@@ -358,13 +392,13 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
                 {isUploading ? (
                   <span style={{ fontSize: '0.75rem' }}>{uploadProgress}%</span>
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L4 5h3v6h2V5h3L8 1zM2 13v2h12v-2H2z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L4 5h3v6h2V5h3L8 1zM2 13v2h12v-2H2z" /></svg>
                 )}
               </button>
-              <input 
-                type="file" 
+              <input
+                type="file"
                 onChange={handleUpload}
-                style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }} 
+                style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
                 disabled={isUploading}
               />
             </div>
@@ -379,8 +413,8 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
             <div className="nautilus-grid">
 
               {files.map((f, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className="nautilus-item"
                   onDoubleClick={() => {
                     if (f.isDir) {
@@ -419,11 +453,11 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
                   {!f.isDir && (
                     <div className="nautilus-item-actions">
                       <button onClick={(e) => { e.stopPropagation(); downloadFile(f.path); }} title="Download">
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v10l3-3 .7.7L8 12.4 4.3 8.7 5 8l3 3V1zM2 13v2h12v-2H2z"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v10l3-3 .7.7L8 12.4 4.3 8.7 5 8l3 3V1zM2 13v2h12v-2H2z" /></svg>
                       </button>
                       {(f.name.endsWith('.mp4') || f.name.endsWith('.mkv') || f.name.endsWith('.webm') || f.name.endsWith('.avi') || f.name.endsWith('.mov')) && (
                         <button onClick={(e) => { e.stopPropagation(); onPlayVideo && onPlayVideo(f.path); }} title="Play">
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6z"/></svg>
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6z" /></svg>
                         </button>
                       )}
                     </div>
@@ -432,7 +466,13 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
               ))}
 
               {files.length === 0 && currentPath !== '/' && (
-                <div className="nautilus-empty">This folder is empty</div>
+                <div className="nautilus-empty">
+                  {currentPath === '/starred'
+                    ? 'No starred files'
+                    : currentPath === '/network'
+                    ? 'No known connections'
+                    : 'This folder is empty'}
+                </div>
               )}
             </div>
           )}
@@ -442,7 +482,7 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
       {/* ──── MOBILE BOTTOM NAV ──── */}
       <nav className="mobile-bottom-nav">
         <button
-          className={`mobile-nav-tab ${currentPath.startsWith('/home') && !drives.some(d => currentPath.startsWith(d.mountpoint)) ? 'active' : ''}`}
+          className={`mobile-nav-tab ${isInHome || quickAccess.some(qa => isInQuickAccess(qa.folder)) ? 'active' : ''}`}
           onClick={() => { setMobileMenuOpen(false); setMobileMountsOpen(false); goHome(); }}
         >
           <img src={getSidebarIcon('home')} alt="" className="mobile-nav-icon" />
@@ -511,8 +551,8 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
             {quickAccess.map(qa => (
               <button
                 key={qa.label}
-                className="sidebar-item"
-                onClick={() => { setMobileMenuOpen(false); navigateTo('/home'); }}
+                className={`sidebar-item ${isInQuickAccess(qa.folder) ? 'active' : ''}`}
+                onClick={() => { setMobileMenuOpen(false); navigateTo(`${userHome}/${qa.folder}`); }}
               >
                 <img src={getSidebarIcon(qa.label)} alt="" className="sidebar-icon" />
                 <span>{qa.label}</span>

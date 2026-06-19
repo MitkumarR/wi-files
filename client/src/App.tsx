@@ -24,6 +24,18 @@ function hasValidToken(): boolean {
   }
 }
 
+/** Extract user's home directory from JWT */
+function getUserHome(): string {
+  try {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) return '/home';
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.homeDir || '/home';
+  } catch {
+    return '/home';
+  }
+}
+
 /** Wrapper that redirects to /auth/login if not authenticated */
 function RequireAuth({ children }: { children: React.ReactNode }) {
   if (!hasValidToken()) {
@@ -44,8 +56,9 @@ function App() {
 
   const handleLogin = () => {
     setIsAuthenticated(true);
-    // Redirect to files after login (default to home dir)
-    navigate('/files?path=/home', { replace: true });
+    // Redirect to files after login (default to user's home dir)
+    const home = getUserHome();
+    navigate(`/files?path=${encodeURIComponent(home)}`, { replace: true });
   };
 
   const handleLogout = () => {
@@ -59,8 +72,9 @@ function App() {
   };
 
   // If user hits root /, redirect to /files or /auth/login
+  const home = getUserHome();
   const rootRedirect = isAuthenticated
-    ? <Navigate to="/files?path=/home" replace />
+    ? <Navigate to={`/files?path=${encodeURIComponent(home)}`} replace />
     : <Navigate to="/auth/login" replace />;
 
   return (
@@ -68,7 +82,7 @@ function App() {
       {/* Auth route — no shell */}
       <Route path="/auth/login" element={
         isAuthenticated
-          ? <Navigate to="/files?path=/home" replace />
+          ? <Navigate to={`/files?path=${encodeURIComponent(home)}`} replace />
           : <Auth onLogin={handleLogin} />
       } />
 
@@ -83,7 +97,7 @@ function App() {
               <Routes>
                 <Route path="/files" element={<Explorer onPlayVideo={handlePlayVideo} />} />
                 <Route path="/view" element={<FileViewer />} />
-                <Route path="*" element={<Navigate to="/files?path=/home" replace />} />
+                <Route path="*" element={<Navigate to={`/files?path=${encodeURIComponent(home)}`} replace />} />
               </Routes>
             </main>
           </div>
