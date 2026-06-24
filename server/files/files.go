@@ -7,13 +7,15 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type FileInfo struct {
-	Name  string `json:"name"`
-	Path  string `json:"path"`
-	IsDir bool   `json:"isDir"`
-	Size  int64  `json:"size"`
+	Name    string    `json:"name"`
+	Path    string    `json:"path"`
+	IsDir   bool      `json:"isDir"`
+	Size    int64     `json:"size"`
+	ModTime time.Time `json:"modTime"`
 }
 
 func HandleFiles(w http.ResponseWriter, r *http.Request) {
@@ -36,14 +38,17 @@ func HandleFiles(w http.ResponseWriter, r *http.Request) {
 	for _, entry := range entries {
 		info, err := entry.Info()
 		size := int64(0)
+		var modTime time.Time
 		if err == nil {
 			size = info.Size()
+			modTime = info.ModTime()
 		}
 		files = append(files, FileInfo{
-			Name:  entry.Name(),
-			Path:  filepath.Join(path, entry.Name()),
-			IsDir: entry.IsDir(),
-			Size:  size,
+			Name:    entry.Name(),
+			Path:    filepath.Join(path, entry.Name()),
+			IsDir:   entry.IsDir(),
+			Size:    size,
+			ModTime: modTime,
 		})
 	}
 

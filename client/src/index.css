@@ -396,6 +396,273 @@ body {
   font-size: 0.95rem;
 }
 
+/* ── Grid captions beneath file labels ───────────────────────────────── */
+.nautilus-item-caption {
+  font-size: 0.68rem;
+  color: var(--naut-text-dim);
+  line-height: 1.2;
+  text-align: center;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── View mode toggle group ──────────────────────────────────────────── */
+.view-mode-toggle {
+  display: flex;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 2px;
+}
+.view-mode-toggle .header-btn { border-radius: 4px; }
+.view-mode-toggle .header-btn.active { background: var(--naut-accent); color: #fff; }
+
+/* ── View Options Dropdown Menu ──────────────────────────────────────── */
+.view-options-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 220px;
+  background: var(--naut-header);
+  border: 1px solid var(--naut-border);
+  border-radius: 10px;
+  padding: 0.5rem 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+}
+.vom-section { padding: 0.25rem 0.75rem; }
+.vom-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--naut-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+.vom-icon-size {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.25rem 0;
+}
+.vom-icon-size button {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 6px;
+  background: var(--naut-hover);
+  color: var(--naut-text);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.vom-icon-size button:hover { background: var(--naut-active); }
+.vom-divider {
+  height: 1px;
+  background: var(--naut-border);
+  margin: 0.35rem 0;
+}
+.vom-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--naut-text);
+  transition: background 0.12s;
+  border-radius: 4px;
+}
+.vom-radio:hover { background: var(--naut-hover); }
+.vom-radio input[type="radio"] {
+  accent-color: var(--naut-accent);
+  width: 14px; height: 14px;
+  margin: 0;
+}
+.vom-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--naut-text);
+}
+.vom-checkbox:hover { background: var(--naut-hover); }
+.vom-check-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--naut-accent);
+}
+.vom-shortcut {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--naut-text-dim);
+}
+.vom-action {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--naut-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.vom-action:hover { background: var(--naut-hover); }
+
+/* ── List View ───────────────────────────────────────────────────────── */
+.nautilus-list {
+  display: flex;
+  flex-direction: column;
+}
+.nautilus-list-header {
+  display: flex;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--naut-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--naut-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.nautilus-list-item {
+  display: flex;
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: background 0.12s;
+  font-size: 0.85rem;
+  color: var(--naut-text);
+  align-items: center;
+}
+.nautilus-list-item:hover { background: var(--naut-hover); }
+.nautilus-list-item:active { background: var(--naut-select); }
+.list-col-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.list-col-size { width: 80px; text-align: right; color: var(--naut-text-dim); font-size: 0.8rem; flex-shrink: 0; }
+.list-col-modified { width: 160px; text-align: right; color: var(--naut-text-dim); font-size: 0.8rem; flex-shrink: 0; }
+.list-col-type { width: 80px; text-align: right; color: var(--naut-text-dim); font-size: 0.8rem; flex-shrink: 0; }
+.list-icon { object-fit: contain; flex-shrink: 0; }
+
+/* ── Modals (Captions / Visible Columns) ─────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.modal-box {
+  background: var(--naut-sidebar);
+  border: 1px solid var(--naut-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  width: 380px;
+  max-width: 90vw;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.modal-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--naut-text);
+}
+.modal-close {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%;
+  background: var(--naut-hover);
+  color: var(--naut-text-dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.12s;
+}
+.modal-close:hover { background: var(--naut-active); color: var(--naut-text); }
+.modal-desc {
+  font-size: 0.8rem;
+  color: var(--naut-text-dim);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+.modal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  background: var(--naut-hover);
+  border-radius: 8px;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--naut-text);
+}
+.modal-row select {
+  background: var(--naut-surface);
+  color: var(--naut-text-dim);
+  border: 1px solid var(--naut-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.modal-col-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--naut-border);
+  font-size: 0.85rem;
+  color: var(--naut-text);
+}
+.modal-col-row.disabled { color: var(--naut-text-dim); }
+.col-always-on { font-size: 0.7rem; color: var(--naut-text-dim); }
+
+/* ── Toggle switch ── */
+.toggle-switch {
+  position: relative;
+  width: 40px; height: 22px;
+  display: inline-block;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  left: 3px; bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--naut-accent); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
 /* ════════════════════════════════════════════════════════════════════════
    BUTTONS (global)
    ════════════════════════════════════════════════════════════════════════ */

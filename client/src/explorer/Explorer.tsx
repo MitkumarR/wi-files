@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   getFolderIcon,
@@ -13,7 +13,11 @@ interface FileInfo {
   path: string;
   isDir: boolean;
   size: number;
+  modTime: string;
 }
+
+type ViewMode = 'grid' | 'list';
+type SortBy = 'name-asc' | 'name-desc' | 'modified-desc' | 'modified-asc' | 'size' | 'type';
 
 interface DriveInfo {
   name: string;
@@ -56,6 +60,21 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileMountsOpen, setMobileMountsOpen] = useState(false);
 
+  // View options state
+  const [viewMode, setViewMode] = useState<ViewMode>(() => (localStorage.getItem('wf_viewMode') as ViewMode) || 'grid');
+  const [iconSize, setIconSize] = useState(() => parseInt(localStorage.getItem('wf_iconSize') || '64'));
+  const [sortBy, setSortBy] = useState<SortBy>(() => (localStorage.getItem('wf_sortBy') as SortBy) || 'name-asc');
+  const [showHidden, setShowHidden] = useState(() => localStorage.getItem('wf_showHidden') === 'true');
+  const [viewMenuOpen, setViewMenuOpen] = useState(false);
+  const [captionsModalOpen, setCaptionsModalOpen] = useState(false);
+  const [gridCaptions, setGridCaptions] = useState<[string, string, string]>(() => {
+    try { return JSON.parse(localStorage.getItem('wf_gridCaptions') || '["none","none","none"]'); } catch { return ['none','none','none']; }
+  });
+  const [listColumns, setListColumns] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem('wf_listColumns') || '{"size":true,"modified":true,"type":false}'); } catch { return {size:true,modified:true,type:false}; }
+  });
+  const [columnsModalOpen, setColumnsModalOpen] = useState(false);
+
   useEffect(() => {
     fetchDrives();
   }, []);
@@ -63,6 +82,60 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
   useEffect(() => {
     fetchFiles(currentPath);
   }, [currentPath]);
+
+  // Persist view preferences
+  useEffect(() => { localStorage.setItem('wf_viewMode', viewMode); }, [viewMode]);
+  useEffect(() => { localStorage.setItem('wf_iconSize', String(iconSize)); }, [iconSize]);
+  useEffect(() => { localStorage.setItem('wf_sortBy', sortBy); }, [sortBy]);
+  useEffect(() => { localStorage.setItem('wf_showHidden', String(showHidden)); }, [showHidden]);
+  useEffect(() => { localStorage.setItem('wf_gridCaptions', JSON.stringify(gridCaptions)); }, [gridCaptions]);
+  useEffect(() => { localStorage.setItem('wf_listColumns', JSON.stringify(listColumns)); }, [listColumns]);
+
+  // Ctrl+H to toggle hidden files
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'h') { e.preventDefault(); setShowHidden(v => !v); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  // Close view menu on outside click
+  useEffect(() => {
+    if (!viewMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.view-options-menu') && !target.closest('.view-toggle-btn')) {
+        setViewMenuOpen(false);
+      }
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [viewMenuOpen]);
+
+  /** Get file extension */
+  const getExt = (name: string) => name.includes('.') ? name.split('.').pop()?.toLowerCase() || '' : '';
+
+  /** Sort and filter files */
+  const processedFiles = React.useMemo(() => {
+    let result = [...files];
+    // Filter hidden
+    if (!showHidden) result = result.filter(f => !f.name.startsWith('.'));
+    // Sort — directories always first
+    result.sort((a, b) => {
+      if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+      switch (sortBy) {
+        case 'name-asc': return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+        case 'name-desc': return b.name.localeCompare(a.name, undefined, { sensitivity: 'base' });
+        case 'modified-desc': return new Date(b.modTime).getTime() - new Date(a.modTime).getTime();
+        case 'modified-asc': return new Date(a.modTime).getTime() - new Date(b.modTime).getTime();
+        case 'size': return b.size - a.size;
+        case 'type': return getExt(a.name).localeCompare(getExt(b.name));
+        default: return 0;
+      }
+    });
+    return result;
+  }, [files, showHidden, sortBy]);
 
   const fetchDrives = async () => {
     try {
@@ -391,6 +464,16 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
           </div>
 
           <div className="header-right">
+            {/* View mode toggle */}
+            <div className="view-mode-toggle">
+              <button className={`header-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid view">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 1h6v6H1zm8 0h6v6H9zM1 9h6v6H1zm8 0h6v6H9z"/></svg>
+              </button>
+              <button className={`header-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List view">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2h14v2H1zm0 4h14v2H1zm0 4h14v2H1zm0 4h14v2H1z"/></svg>
+              </button>
+            </div>
+
             {/* Upload button */}
             <div style={{ position: 'relative' }}>
               <button className="header-btn upload-btn">
@@ -407,82 +490,195 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
                 disabled={isUploading}
               />
             </div>
+
+            {/* View options dropdown trigger */}
+            <div style={{ position: 'relative' }}>
+              <button className="header-btn view-toggle-btn" onClick={() => setViewMenuOpen(v => !v)} title="View Options">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
+              </button>
+
+              {/* ──── View Options Dropdown ──── */}
+              {viewMenuOpen && (
+                <div className="view-options-menu">
+                  <div className="vom-section">
+                    <div className="vom-label">Icon Size</div>
+                    <div className="vom-icon-size">
+                      <button onClick={() => setIconSize(s => Math.max(32, s - 16))} title="Smaller">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 7h10v2H3z"/></svg>
+                      </button>
+                      <button onClick={() => setIconSize(s => Math.min(128, s + 16))} title="Larger">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3h2v4h4v2H9v4H7V9H3V7h4z"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="vom-divider" />
+                  <div className="vom-section">
+                    <div className="vom-label">Sort</div>
+                    {([['name-asc','A-Z'],['name-desc','Z-A'],['modified-desc','Last Modified'],['modified-asc','First Modified'],['size','Size'],['type','Type']] as [SortBy,string][]).map(([val, label]) => (
+                      <label key={val} className="vom-radio">
+                        <input type="radio" name="sort" checked={sortBy === val} onChange={() => setSortBy(val)} />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="vom-divider" />
+                  <label className="vom-checkbox" onClick={() => setShowHidden(v => !v)}>
+                    <span className="vom-check-icon">{showHidden ? '✓' : ''}</span>
+                    <span>Show Hidden Files</span>
+                    <span className="vom-shortcut">Ctrl+H</span>
+                  </label>
+                  <div className="vom-divider" />
+                  {viewMode === 'grid' ? (
+                    <button className="vom-action" onClick={() => { setViewMenuOpen(false); setCaptionsModalOpen(true); }}>Captions…</button>
+                  ) : (
+                    <button className="vom-action" onClick={() => { setViewMenuOpen(false); setColumnsModalOpen(true); }}>Visible Columns…</button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
-        {/* ──── File Grid ──── */}
+        {/* ──── File Content ──── */}
         <div className="nautilus-content">
           {loading ? (
             <div className="nautilus-empty">Loading…</div>
-          ) : (
-            <div className="nautilus-grid">
-
-              {files.map((f, i) => (
+          ) : viewMode === 'grid' ? (
+            /* ── GRID VIEW ── */
+            <div className="nautilus-grid" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${iconSize + 36}px, 1fr))` }}>
+              {processedFiles.map((f, i) => (
                 <div
                   key={i}
                   className={`nautilus-item ${f.name.startsWith('.') ? 'nautilus-hidden-item' : ''}`}
                   onDoubleClick={() => {
-                    if (f.isDir) {
-                      navigateTo(f.path);
-                    } else if (isViewable(f.name)) {
-                      // Open image/video in viewer
-                      navigate(`/view?path=${encodeURIComponent(f.path)}`);
-                    }
+                    if (f.isDir) navigateTo(f.path);
+                    else if (isViewable(f.name)) navigate(`/view?path=${encodeURIComponent(f.path)}`);
                   }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    if (!f.isDir) downloadFile(f.path);
-                  }}
+                  onContextMenu={(e) => { e.preventDefault(); if (!f.isDir) downloadFile(f.path); }}
                 >
-                  <div className="nautilus-item-icon">
+                  <div className="nautilus-item-icon" style={{ width: iconSize, height: iconSize }}>
                     {f.isDir ? (
-                      <img src={getFolderIcon(f.name)} alt={f.name} />
+                      <img src={getFolderIcon(f.name)} alt={f.name} style={{ maxWidth: iconSize, maxHeight: iconSize }} />
                     ) : hasThumbnail(f.name) ? (
                       <img
                         src={`/api/thumbnail?path=${encodeURIComponent(f.path)}&token=${localStorage.getItem('jwt_token')}`}
                         alt={f.name}
                         className="nautilus-thumb"
-                        onError={(e) => {
-                          // Fall back to Yaru icon
-                          e.currentTarget.src = getFileIcon(f.name);
-                          e.currentTarget.classList.remove('nautilus-thumb');
-                        }}
+                        style={{ maxWidth: iconSize, maxHeight: iconSize }}
+                        onError={(e) => { e.currentTarget.src = getFileIcon(f.name); e.currentTarget.classList.remove('nautilus-thumb'); }}
                       />
                     ) : (
-                      <img src={getFileIcon(f.name)} alt={f.name} />
+                      <img src={getFileIcon(f.name)} alt={f.name} style={{ maxWidth: iconSize, maxHeight: iconSize }} />
                     )}
                   </div>
                   <span className="nautilus-item-label" title={f.name}>{f.name}</span>
-
-                  {/* Action buttons overlay on hover */}
+                  {gridCaptions.map((cap, ci) => cap !== 'none' && (
+                    <span key={ci} className="nautilus-item-caption">
+                      {cap === 'size' ? formatSize(f.size) : cap === 'modified' ? new Date(f.modTime).toLocaleDateString() : cap === 'type' ? (f.isDir ? 'Folder' : getExt(f.name).toUpperCase() || 'File') : ''}
+                    </span>
+                  ))}
                   {!f.isDir && (
                     <div className="nautilus-item-actions">
                       <button onClick={(e) => { e.stopPropagation(); downloadFile(f.path); }} title="Download">
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v10l3-3 .7.7L8 12.4 4.3 8.7 5 8l3 3V1zM2 13v2h12v-2H2z" /></svg>
                       </button>
-                      {(f.name.endsWith('.mp4') || f.name.endsWith('.mkv') || f.name.endsWith('.webm') || f.name.endsWith('.avi') || f.name.endsWith('.mov')) && (
-                        <button onClick={(e) => { e.stopPropagation(); onPlayVideo && onPlayVideo(f.path); }} title="Play">
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6z" /></svg>
-                        </button>
-                      )}
                     </div>
                   )}
                 </div>
               ))}
-
-              {files.length === 0 && currentPath !== '/' && (
+              {processedFiles.length === 0 && (
                 <div className="nautilus-empty">
-                  {currentPath === '/starred'
-                    ? 'No starred files'
-                    : currentPath === '/network'
-                      ? 'No known connections'
-                      : 'This folder is empty'}
+                  {currentPath === '/starred' ? 'No starred files' : currentPath === '/network' ? 'No known connections' : 'This folder is empty'}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* ── LIST VIEW ── */
+            <div className="nautilus-list">
+              <div className="nautilus-list-header">
+                <span className="list-col-name">Name</span>
+                {listColumns.size && <span className="list-col-size">Size</span>}
+                {listColumns.modified && <span className="list-col-modified">Modified</span>}
+                {listColumns.type && <span className="list-col-type">Type</span>}
+              </div>
+              {processedFiles.map((f, i) => (
+                <div
+                  key={i}
+                  className={`nautilus-list-item ${f.name.startsWith('.') ? 'nautilus-hidden-item' : ''}`}
+                  onDoubleClick={() => {
+                    if (f.isDir) navigateTo(f.path);
+                    else if (isViewable(f.name)) navigate(`/view?path=${encodeURIComponent(f.path)}`);
+                  }}
+                  onContextMenu={(e) => { e.preventDefault(); if (!f.isDir) downloadFile(f.path); }}
+                >
+                  <span className="list-col-name">
+                    <img
+                      src={f.isDir ? getFolderIcon(f.name) : getFileIcon(f.name)}
+                      alt="" className="list-icon"
+                      style={{ width: Math.min(iconSize, 24), height: Math.min(iconSize, 24) }}
+                    />
+                    {f.name}
+                  </span>
+                  {listColumns.size && <span className="list-col-size">{f.isDir ? '—' : formatSize(f.size)}</span>}
+                  {listColumns.modified && <span className="list-col-modified">{new Date(f.modTime).toLocaleString()}</span>}
+                  {listColumns.type && <span className="list-col-type">{f.isDir ? 'Folder' : getExt(f.name).toUpperCase() || 'File'}</span>}
+                </div>
+              ))}
+              {processedFiles.length === 0 && (
+                <div className="nautilus-empty">
+                  {currentPath === '/starred' ? 'No starred files' : currentPath === '/network' ? 'No known connections' : 'This folder is empty'}
                 </div>
               )}
             </div>
           )}
         </div>
       </div>
+
+      {/* ──── Grid View Captions Modal ──── */}
+      {captionsModalOpen && (
+        <div className="modal-overlay" onClick={() => setCaptionsModalOpen(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Grid View Captions</h3>
+              <button className="modal-close" onClick={() => setCaptionsModalOpen(false)}>✕</button>
+            </div>
+            <p className="modal-desc">Add information to be displayed beneath file and folder names.</p>
+            {(['First', 'Second', 'Third'] as const).map((label, i) => (
+              <div key={label} className="modal-row">
+                <span>{label}</span>
+                <select value={gridCaptions[i]} onChange={e => { const c = [...gridCaptions] as [string,string,string]; c[i] = e.target.value; setGridCaptions(c); }}>
+                  <option value="none">None</option>
+                  <option value="size">Size</option>
+                  <option value="type">Type</option>
+                  <option value="modified">Date Modified</option>
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ──── Visible Columns Modal ──── */}
+      {columnsModalOpen && (
+        <div className="modal-overlay" onClick={() => setColumnsModalOpen(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Visible Columns</h3>
+              <button className="modal-close" onClick={() => setColumnsModalOpen(false)}>✕</button>
+            </div>
+            <div className="modal-col-row disabled"><span>Name</span><span className="col-always-on">Always On</span></div>
+            {[['size','Size'],['modified','Date Modified'],['type','Type']].map(([key, label]) => (
+              <div key={key} className="modal-col-row">
+                <span>{label}</span>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={!!listColumns[key]} onChange={e => setListColumns(c => ({...c, [key]: e.target.checked}))} />
+                  <span className="toggle-slider" />
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ──── MOBILE BOTTOM NAV ──── */}
       <nav className="mobile-bottom-nav">
