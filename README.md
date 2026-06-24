@@ -2,53 +2,32 @@
   <img src="logo/WiFiles/wifiles-blue.svg" alt="WiFiles Logo" width="200" />
 </p>
 
-**Wi-Files** is a self-hosted private file server that brings the familiar, polished experience of the Ubuntu GNOME Nautilus file manager to your web browser. 
+**Wi-Files** is a self-hosted private file server that brings a modern, Linux-native file management experience to the web. Inspired by the simplicity and familiarity of Ubuntu GNOME Files (Nautilus), WiFiles allows you to securely access, browse, manage, and stream files from your Linux machine through any web browser.
 
-## Features
+Whether you're on your phone, tablet, or another computer, WiFiles turns your Linux desktop into a personal cloud while keeping your data under your control.
 
-### Frontend (React-TS)
-- Nautilus-Inspired UI
-- Client-Side Routing
-- Media Previews
+### Features
+- Access files from any web browser
+- Browse local directories and mounted drives
+- Mobile-friendly interface inspired by GNOME Files (Nautilus)
+- Secure authentication using Linux user accounts
+- File upload and download support
+- Media streaming directly from your device
+- Self-hosted and privacy-focused
+- Lightweight and easy to deploy
 
-### Server (Go)
-- Background Indexing
-- Drive Management
-- Secure File Access
-- Media Streaming
+## Project Status
 
-## Prerequisites
+WiFiles is currently under active development.
 
-- **Linux Environment**: The server relies on Linux-specific tools like `lsblk` for drive management.
-- **Go**: `1.20+` recommended for the server server.
-- **Node.js**: `16+` for the React frontend.
+The project is focused on building a polished GNOME Files-inspired user experience, a robust Go backend, and a secure Linux-native authentication and file access system. Features and APIs may change as development progresses.
 
-## Getting Started
+## Contributing
 
-### 1. Start the server Server
+Contributions, feedback, and feature suggestions are welcome.
 
-```bash
-cd server
-go mod tidy
-go run main.go
-```
-The server will initialize the SQLite database, start the background filesystem scanner, and listen on `http://localhost:8080`.
-
-### 2. Start the Frontend Client
-
-In a new terminal window:
-
-```bash
-cd client
-npm install
-npm run dev
-```
-The frontend will be served by Vite, usually at `http://localhost:5173`.
-
-### 3. Usage
-Navigate to the frontend URL in your browser. You will be prompted to log in. Once authenticated, you can browse your local filesystem, view media, and monitor mounted drives exactly as you would natively in Ubuntu.
-
+Before contributing, please read the [guidelines](CONTRIBUTING.md).
 
 ## License
 
-See the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](LICENSE).
