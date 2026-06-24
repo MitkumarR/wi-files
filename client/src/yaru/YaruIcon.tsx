@@ -11,36 +11,61 @@
  * so we use a helper that constructs the path string dynamically.
  */
 
-// ── Folder icons (Yaru-blue for the blue folder look) ────────────────
-const PLACES_BLUE = './icons/Yaru-blue/48x48/places/';
-const PLACES      = './icons/Yaru/48x48/places/';
-const EMBLEMS     = './icons/Yaru/48x48/emblems/';
-const MIMETYPES   = './icons/Yaru/48x48/mimetypes/';
-const DEVICES_SVG = './icons/Yaru/scalable/devices/';
-const PLACES_SCALABLE = './icons/Yaru/scalable/places/';
-const EMBLEMS_SCALABLE = './icons/Yaru/scalable/emblems/';
-const ACTIONS_SCALABLE = './icons/Yaru/scalable/actions/';
+// ── Bucket Logic ───────────────────────────────────────────────────────
+type SizeBucket = '32x32' | '48x48' | '256x256';
 
-/* Vite needs static analysis for glob imports.
-   We use import.meta.glob to let Vite discover every icon at build time. */
-const bluePlace = import.meta.glob('./icons/Yaru-blue/48x48/places/*.png',  { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const place     = import.meta.glob('./icons/Yaru/48x48/places/*.png',       { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const emblem    = import.meta.glob('./icons/Yaru/48x48/emblems/*.png',      { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const mime      = import.meta.glob('./icons/Yaru/48x48/mimetypes/*.png',    { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const deviceSvg = import.meta.glob('./icons/Yaru/scalable/devices/*.svg',   { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const placeSvg  = import.meta.glob('./icons/Yaru/scalable/places/*.svg',    { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const emblemSvg = import.meta.glob('./icons/Yaru/scalable/emblems/*.svg',   { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const actionSvg = import.meta.glob('./icons/Yaru/scalable/actions/*.svg',   { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+function getBucket(size?: number): SizeBucket {
+  if (!size) return '48x48';
+  if (size <= 32) return '32x32';
+  if (size <= 48) return '48x48';
+  return '256x256';
+}
+
+// ── Icons Glob Imports ─────────────────────────────────────────────────
+const bluePlace = {
+  '32x32': import.meta.glob('./icons/Yaru-blue/32x32/places/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+  '48x48': import.meta.glob('./icons/Yaru-blue/48x48/places/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+  '256x256': import.meta.glob('./icons/Yaru-blue/256x256/places/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+};
+
+const place = {
+  '32x32': import.meta.glob('./icons/Yaru/32x32/places/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+  '48x48': import.meta.glob('./icons/Yaru/48x48/places/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+  '256x256': import.meta.glob('./icons/Yaru/256x256/places/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+};
+
+const emblem = {
+  '32x32': import.meta.glob('./icons/Yaru/32x32/emblems/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+  '48x48': import.meta.glob('./icons/Yaru/48x48/emblems/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+  '256x256': import.meta.glob('./icons/Yaru/256x256/emblems/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+};
+
+const mime = {
+  '32x32': import.meta.glob('./icons/Yaru/32x32/mimetypes/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+  '48x48': import.meta.glob('./icons/Yaru/48x48/mimetypes/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+  '256x256': import.meta.glob('./icons/Yaru/256x256/mimetypes/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+};
+
+const deviceSvg = import.meta.glob('./icons/Yaru/scalable/devices/*.svg', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const placeSvg = import.meta.glob('./icons/Yaru/scalable/places/*.svg', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const emblemSvg = import.meta.glob('./icons/Yaru/scalable/emblems/*.svg', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const actionSvg = import.meta.glob('./icons/Yaru/scalable/actions/*.svg', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 // Helper: resolve an asset from one of the glob maps.
-function resolve(map: Record<string, string>, dir: string, file: string): string | undefined {
-  return map[`${dir}${file}`];
+function resolve(map: Record<SizeBucket, Record<string, string>>, bucket: SizeBucket, basePath: string, file: string): string | undefined {
+  const path = `./icons/${basePath}/${bucket}/${file}`;
+  return map[bucket]?.[path];
+}
+
+function resolveSvg(map: Record<string, string>, file: string): string | undefined {
+  return map[file];
 }
 
 // ── Public API ───────────────────────────────────────────────────────
 
 /** Get the URL for a folder icon.  Supports special XDG folder names. */
-export function getFolderIcon(name: string): string {
+export function getFolderIcon(name: string, size?: number): string {
+  const bucket = getBucket(size);
   const lower = name.toLowerCase();
   const specialFolders: Record<string, string> = {
     documents: 'folder-documents.png',
@@ -58,21 +83,24 @@ export function getFolderIcon(name: string): string {
 
   const match = specialFolders[lower];
   if (match) {
-    return resolve(bluePlace, PLACES_BLUE, match) ?? resolve(place, PLACES, match) ?? getGenericFolderIcon();
+    return resolve(bluePlace, bucket, 'Yaru-blue', `places/${match}`) ?? resolve(place, bucket, 'Yaru', `places/${match}`) ?? getGenericFolderIcon(size);
   }
-  return getGenericFolderIcon();
+  return getGenericFolderIcon(size);
 }
 
-export function getGenericFolderIcon(): string {
-  return resolve(bluePlace, PLACES_BLUE, 'folder.png') ?? '';
+export function getGenericFolderIcon(size?: number): string {
+  const bucket = getBucket(size);
+  return resolve(bluePlace, bucket, 'Yaru-blue', 'places/folder.png') ?? '';
 }
 
-export function getHomeIcon(): string {
-  return resolve(bluePlace, PLACES_BLUE, 'user-home.png') ?? resolve(place, PLACES, 'user-home.png') ?? '';
+export function getHomeIcon(size?: number): string {
+  const bucket = getBucket(size);
+  return resolve(bluePlace, bucket, 'Yaru-blue', 'places/user-home.png') ?? resolve(place, bucket, 'Yaru', 'places/user-home.png') ?? '';
 }
 
-export function getStarredIcon(): string {
-  return resolve(emblem, EMBLEMS, 'emblem-favorite.png') ?? '';
+export function getStarredIcon(size?: number): string {
+  const bucket = getBucket(size);
+  return resolve(emblem, bucket, 'Yaru', 'emblems/emblem-favorite.png') ?? '';
 }
 
 /** Get SVG sidebar icons from the scalable directory */
@@ -80,19 +108,19 @@ export function getSidebarIcon(name: string): string {
   const lower = name.toLowerCase();
   
   if (lower === 'starred') {
-    return resolve(emblemSvg, EMBLEMS_SCALABLE, 'emblem-favorite-symbolic.svg') ?? '';
+    return resolveSvg(emblemSvg, './icons/Yaru/scalable/emblems/emblem-favorite-symbolic.svg') ?? '';
   }
   
   if (lower === 'logout') {
-    return resolve(actionSvg, ACTIONS_SCALABLE, 'system-log-out-symbolic.svg') ?? '';
+    return resolveSvg(actionSvg, './icons/Yaru/scalable/actions/system-log-out-symbolic.svg') ?? '';
   }
 
   if (lower === 'menu') {
-    return resolve(actionSvg, ACTIONS_SCALABLE, 'open-menu-symbolic.svg') ?? '';
+    return resolveSvg(actionSvg, './icons/Yaru/scalable/actions/open-menu-symbolic.svg') ?? '';
   }
 
   if (lower === 'mounts') {
-    return resolve(deviceSvg, DEVICES_SVG, 'drive-harddisk-system-symbolic.svg') ?? '';
+    return resolveSvg(deviceSvg, './icons/Yaru/scalable/devices/drive-harddisk-system-symbolic.svg') ?? '';
   }
 
   const map: Record<string, string> = {
@@ -108,31 +136,32 @@ export function getSidebarIcon(name: string): string {
 
   const file = map[lower];
   if (file) {
-    return resolve(placeSvg, PLACES_SCALABLE, file) ?? '';
+    return resolveSvg(placeSvg, `./icons/Yaru/scalable/places/${file}`) ?? '';
   }
   
   // Generic fallback
-  return resolve(placeSvg, PLACES_SCALABLE, 'folder-symbolic.svg') ?? '';
+  return resolveSvg(placeSvg, `./icons/Yaru/scalable/places/folder-symbolic.svg`) ?? '';
 }
 
-export function getDesktopIcon(): string {
-  return resolve(bluePlace, PLACES_BLUE, 'user-desktop.png') ?? resolve(place, PLACES, 'user-desktop.png') ?? '';
+export function getDesktopIcon(size?: number): string {
+  const bucket = getBucket(size);
+  return resolve(bluePlace, bucket, 'Yaru-blue', 'places/user-desktop.png') ?? resolve(place, bucket, 'Yaru', 'places/user-desktop.png') ?? '';
 }
 
 export function getDriveIcon(): string {
-  return resolve(deviceSvg, DEVICES_SVG, 'drive-harddisk-symbolic.svg') ?? '';
+  return resolveSvg(deviceSvg, './icons/Yaru/scalable/devices/drive-harddisk-symbolic.svg') ?? '';
 }
 
 export function getDriveUsbIcon(): string {
-  return resolve(deviceSvg, DEVICES_SVG, 'drive-harddisk-usb-symbolic.svg') ?? '';
+  return resolveSvg(deviceSvg, './icons/Yaru/scalable/devices/drive-harddisk-usb-symbolic.svg') ?? '';
 }
 
 export function getDriveSystemIcon(): string {
-  return resolve(deviceSvg, DEVICES_SVG, 'drive-harddisk-system-symbolic.svg') ?? '';
+  return resolveSvg(deviceSvg, './icons/Yaru/scalable/devices/drive-harddisk-system-symbolic.svg') ?? '';
 }
 
 /** Map a file extension to the right Yaru mimetype icon URL. */
-export function getFileIcon(filename: string): string {
+export function getFileIcon(filename: string, size?: number): string {
   const ext = filename.includes('.') ? filename.split('.').pop()!.toLowerCase() : '';
 
   // Extension → mimetype PNG filename
@@ -283,7 +312,8 @@ export function getFileIcon(filename: string): string {
 
   const iconFile = extMap[ext];
   if (iconFile) {
-    return resolve(mime, MIMETYPES, iconFile) ?? getGenericFileIcon();
+    const bucket = getBucket(size);
+    return resolve(mime, bucket, 'Yaru', `mimetypes/${iconFile}`) ?? getGenericFileIcon(size);
   }
 
   // Filename-based matches (no extension)
@@ -302,12 +332,14 @@ export function getFileIcon(filename: string): string {
   const nameLower = filename.toLowerCase();
   const nameIcon = nameMap[nameLower];
   if (nameIcon) {
-    return resolve(mime, MIMETYPES, nameIcon) ?? getGenericFileIcon();
+    const bucket = getBucket(size);
+    return resolve(mime, bucket, 'Yaru', `mimetypes/${nameIcon}`) ?? getGenericFileIcon(size);
   }
 
-  return getGenericFileIcon();
+  return getGenericFileIcon(size);
 }
 
-export function getGenericFileIcon(): string {
-  return resolve(mime, MIMETYPES, 'text-x-generic.png') ?? '';
+export function getGenericFileIcon(size?: number): string {
+  const bucket = getBucket(size);
+  return resolve(mime, bucket, 'Yaru', 'mimetypes/text-x-generic.png') ?? '';
 }

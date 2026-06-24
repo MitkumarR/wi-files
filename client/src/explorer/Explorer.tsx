@@ -7,6 +7,7 @@ import {
   getDriveSystemIcon,
   getSidebarIcon,
 } from '../yaru/YaruIcon';
+import Popover from '../components/Popover';
 
 interface FileInfo {
   name: string;
@@ -65,7 +66,6 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
   const [iconSize, setIconSize] = useState(() => parseInt(localStorage.getItem('wf_iconSize') || '64'));
   const [sortBy, setSortBy] = useState<SortBy>(() => (localStorage.getItem('wf_sortBy') as SortBy) || 'name-asc');
   const [showHidden, setShowHidden] = useState(() => localStorage.getItem('wf_showHidden') === 'true');
-  const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const [captionsModalOpen, setCaptionsModalOpen] = useState(false);
   const [gridCaptions, setGridCaptions] = useState<[string, string, string]>(() => {
     try { return JSON.parse(localStorage.getItem('wf_gridCaptions') || '["none","none","none"]'); } catch { return ['none','none','none']; }
@@ -99,19 +99,6 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
-
-  // Close view menu on outside click
-  useEffect(() => {
-    if (!viewMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.view-options-menu') && !target.closest('.view-toggle-btn')) {
-        setViewMenuOpen(false);
-      }
-    };
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
-  }, [viewMenuOpen]);
 
   /** Get file extension */
   const getExt = (name: string) => name.includes('.') ? name.split('.').pop()?.toLowerCase() || '' : '';
@@ -491,51 +478,49 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
               />
             </div>
 
-            {/* View options dropdown trigger */}
-            <div style={{ position: 'relative' }}>
-              <button className="header-btn view-toggle-btn" onClick={() => setViewMenuOpen(v => !v)} title="View Options">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
-              </button>
-
-              {/* ──── View Options Dropdown ──── */}
-              {viewMenuOpen && (
-                <div className="view-options-menu">
-                  <div className="vom-section">
-                    <div className="vom-label">Icon Size</div>
-                    <div className="vom-icon-size">
-                      <button onClick={() => setIconSize(s => Math.max(32, s - 16))} title="Smaller">
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 7h10v2H3z"/></svg>
-                      </button>
-                      <button onClick={() => setIconSize(s => Math.min(128, s + 16))} title="Larger">
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3h2v4h4v2H9v4H7V9H3V7h4z"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="vom-divider" />
-                  <div className="vom-section">
-                    <div className="vom-label">Sort</div>
-                    {([['name-asc','A-Z'],['name-desc','Z-A'],['modified-desc','Last Modified'],['modified-asc','First Modified'],['size','Size'],['type','Type']] as [SortBy,string][]).map(([val, label]) => (
-                      <label key={val} className="vom-radio">
-                        <input type="radio" name="sort" checked={sortBy === val} onChange={() => setSortBy(val)} />
-                        <span>{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <div className="vom-divider" />
-                  <label className="vom-checkbox" onClick={() => setShowHidden(v => !v)}>
-                    <span className="vom-check-icon">{showHidden ? '✓' : ''}</span>
-                    <span>Show Hidden Files</span>
-                    <span className="vom-shortcut">Ctrl+H</span>
-                  </label>
-                  <div className="vom-divider" />
-                  {viewMode === 'grid' ? (
-                    <button className="vom-action" onClick={() => { setViewMenuOpen(false); setCaptionsModalOpen(true); }}>Captions…</button>
-                  ) : (
-                    <button className="vom-action" onClick={() => { setViewMenuOpen(false); setColumnsModalOpen(true); }}>Visible Columns…</button>
-                  )}
+            {/* View options popover */}
+            <Popover
+              align="end"
+              trigger={
+                <button className="header-btn view-toggle-btn" title="View Options">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
+                </button>
+              }
+            >
+              <div className="vom-section">
+                <div className="vom-label">Icon Size</div>
+                <div className="vom-icon-size">
+                  <button onClick={() => setIconSize(s => Math.max(32, s - 16))} title="Smaller">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 7h10v2H3z"/></svg>
+                  </button>
+                  <button onClick={() => setIconSize(s => Math.min(128, s + 16))} title="Larger">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3h2v4h4v2H9v4H7V9H3V7h4z"/></svg>
+                  </button>
                 </div>
+              </div>
+              <div className="vom-divider" />
+              <div className="vom-section">
+                <div className="vom-label">Sort</div>
+                {([['name-asc','A-Z'],['name-desc','Z-A'],['modified-desc','Last Modified'],['modified-asc','First Modified'],['size','Size'],['type','Type']] as [SortBy,string][]).map(([val, label]) => (
+                  <label key={val} className="vom-radio">
+                    <input type="radio" name="sort" checked={sortBy === val} onChange={() => setSortBy(val)} />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="vom-divider" />
+              <label className="vom-checkbox" onClick={() => setShowHidden(v => !v)}>
+                <span className="vom-check-icon">{showHidden ? '✓' : ''}</span>
+                <span>Show Hidden Files</span>
+                <span className="vom-shortcut">Ctrl+H</span>
+              </label>
+              <div className="vom-divider" />
+              {viewMode === 'grid' ? (
+                <button className="vom-action" onClick={() => setCaptionsModalOpen(true)}>Captions…</button>
+              ) : (
+                <button className="vom-action" onClick={() => setColumnsModalOpen(true)}>Visible Columns…</button>
               )}
-            </div>
+            </Popover>
           </div>
         </header>
 
@@ -558,17 +543,17 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
                 >
                   <div className="nautilus-item-icon" style={{ width: iconSize, height: iconSize }}>
                     {f.isDir ? (
-                      <img src={getFolderIcon(f.name)} alt={f.name} style={{ maxWidth: iconSize, maxHeight: iconSize }} />
+                      <img src={getFolderIcon(f.name, iconSize)} alt={f.name} style={{ maxWidth: iconSize, maxHeight: iconSize }} />
                     ) : hasThumbnail(f.name) ? (
                       <img
                         src={`/api/thumbnail?path=${encodeURIComponent(f.path)}&token=${localStorage.getItem('jwt_token')}`}
                         alt={f.name}
                         className="nautilus-thumb"
                         style={{ maxWidth: iconSize, maxHeight: iconSize }}
-                        onError={(e) => { e.currentTarget.src = getFileIcon(f.name); e.currentTarget.classList.remove('nautilus-thumb'); }}
+                        onError={(e) => { e.currentTarget.src = getFileIcon(f.name, iconSize); e.currentTarget.classList.remove('nautilus-thumb'); }}
                       />
                     ) : (
-                      <img src={getFileIcon(f.name)} alt={f.name} style={{ maxWidth: iconSize, maxHeight: iconSize }} />
+                      <img src={getFileIcon(f.name, iconSize)} alt={f.name} style={{ maxWidth: iconSize, maxHeight: iconSize }} />
                     )}
                   </div>
                   <span className="nautilus-item-label" title={f.name}>{f.name}</span>
@@ -613,7 +598,7 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
                 >
                   <span className="list-col-name">
                     <img
-                      src={f.isDir ? getFolderIcon(f.name) : getFileIcon(f.name)}
+                      src={f.isDir ? getFolderIcon(f.name, Math.min(iconSize, 24)) : getFileIcon(f.name, Math.min(iconSize, 24))}
                       alt="" className="list-icon"
                       style={{ width: Math.min(iconSize, 24), height: Math.min(iconSize, 24) }}
                     />
