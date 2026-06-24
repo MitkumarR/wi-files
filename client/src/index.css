@@ -201,6 +201,12 @@ body {
   justify-content: flex-start;
 }
 
+@media (max-width: 768px) {
+  .nautilus-header .header-left .header-btn {
+    display: none;
+  }
+}
+
 .header-center {
   display: flex;
   align-items: center;

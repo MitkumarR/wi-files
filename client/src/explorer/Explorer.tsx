@@ -428,10 +428,10 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
         <header className="nautilus-header">
           <div className="header-left">
             <button className="header-btn" onClick={goBack}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M10.354 3.354L9.646 2.646 4.293 8l5.353 5.354.708-.708L5.707 8z" /></svg>
+              <img src={getActionIcon('go-previous-symbolic')} alt="Back" style={{ width: 16, height: 16, filter: 'brightness(0) invert(1)' }} />
             </button>
             <button className="header-btn" onClick={goForward}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M5.646 3.354l.708-.708L11.707 8l-5.353 5.354-.708-.708L10.293 8z" /></svg>
+              <img src={getActionIcon('go-next-symbolic')} alt="Forward" style={{ width: 16, height: 16, filter: 'brightness(0) invert(1)' }} />
             </button>
           </div>
           <div className="header-center">
@@ -508,10 +508,10 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
                   <div className="vom-label">Icon Size</div>
                   <div className="vom-icon-size">
                     <button onClick={() => setIconSize(s => Math.max(32, s - 16))} title="Smaller">
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 7h10v2H3z" /></svg>
+                      <img src={getActionIcon('zoom-out-symbolic')} alt="Smaller" style={{ width: 16, height: 16, filter: 'brightness(0) invert(1)' }} />
                     </button>
                     <button onClick={() => setIconSize(s => Math.min(128, s + 16))} title="Larger">
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3h2v4h4v2H9v4H7V9H3V7h4z" /></svg>
+                      <img src={getActionIcon('zoom-in-symbolic')} alt="Larger" style={{ width: 16, height: 16, filter: 'brightness(0) invert(1)' }} />
                     </button>
                   </div>
                 </div>
