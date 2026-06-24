@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"os"
 	"strings"
 
 	"wifiles-server/auth"
@@ -11,6 +14,7 @@ import (
 	"wifiles-server/files"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mdp/qrterminal/v3"
 )
 
 // ... (middlewares)
@@ -81,6 +85,21 @@ func securityMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		next(w, r)
 	}
 }
+func getLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "127.0.0.1"
+	}
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback then display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return "127.0.0.1"
+}
 
 func main() {
 	database.InitDB()
@@ -98,6 +117,18 @@ func main() {
 	http.HandleFunc("/api/auth/login", corsMiddleware(securityMiddleware(auth.HandleLogin)))
 	http.HandleFunc("/api/auth/users", corsMiddleware(securityMiddleware(auth.HandleUsers)))
 	http.HandleFunc("/api/auth/avatar", corsMiddleware(securityMiddleware(auth.HandleUserAvatar)))
+
+	ip := getLocalIP()
+	clientURL := fmt.Sprintf("http://%s:5173", ip)
+
+	fmt.Printf("\n======================================================\n")
+	fmt.Printf(" Scan this QR Code to open Wi-Files on your phone\n")
+	fmt.Printf(" URL: %s\n\n", clientURL)
+	
+	// Generate a compact QR code in the terminal
+	qrterminal.GenerateHalfBlock(clientURL, qrterminal.L, os.Stdout)
+	fmt.Printf("\n")
+	fmt.Printf("======================================================\n\n")
 
 	log.Println("Wi-File Backend running on http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

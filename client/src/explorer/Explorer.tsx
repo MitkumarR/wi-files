@@ -277,6 +277,11 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
     <div className="nautilus-root">
       {/* ──── SIDEBAR ──── */}
       <aside className="nautilus-sidebar">
+        {/* Logo */}
+        <div style={{ padding: '0.5rem 0rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
+          <span>Wi-Files</span>
+        </div>
+
         {/* Main nav */}
         <div className="sidebar-section">
           <button
@@ -415,7 +420,7 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
               {files.map((f, i) => (
                 <div
                   key={i}
-                  className="nautilus-item"
+                  className={`nautilus-item ${f.name.startsWith('.') ? 'nautilus-hidden-item' : ''}`}
                   onDoubleClick={() => {
                     if (f.isDir) {
                       navigateTo(f.path);
@@ -470,8 +475,8 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
                   {currentPath === '/starred'
                     ? 'No starred files'
                     : currentPath === '/network'
-                    ? 'No known connections'
-                    : 'This folder is empty'}
+                      ? 'No known connections'
+                      : 'This folder is empty'}
                 </div>
               )}
             </div>
