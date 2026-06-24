@@ -6,6 +6,7 @@ import {
   getHomeIcon,
   getDriveSystemIcon,
   getSidebarIcon,
+  getActionIcon,
 } from '../yaru/YaruIcon';
 import Popover from '../components/Popover';
 
@@ -68,10 +69,10 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
   const [showHidden, setShowHidden] = useState(() => localStorage.getItem('wf_showHidden') === 'true');
   const [captionsModalOpen, setCaptionsModalOpen] = useState(false);
   const [gridCaptions, setGridCaptions] = useState<[string, string, string]>(() => {
-    try { return JSON.parse(localStorage.getItem('wf_gridCaptions') || '["none","none","none"]'); } catch { return ['none','none','none']; }
+    try { return JSON.parse(localStorage.getItem('wf_gridCaptions') || '["none","none","none"]'); } catch { return ['none', 'none', 'none']; }
   });
   const [listColumns, setListColumns] = useState<Record<string, boolean>>(() => {
-    try { return JSON.parse(localStorage.getItem('wf_listColumns') || '{"size":true,"modified":true,"type":false}'); } catch { return {size:true,modified:true,type:false}; }
+    try { return JSON.parse(localStorage.getItem('wf_listColumns') || '{"size":true,"modified":true,"type":false}'); } catch { return { size: true, modified: true, type: false }; }
   });
   const [columnsModalOpen, setColumnsModalOpen] = useState(false);
 
@@ -433,94 +434,113 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M5.646 3.354l.708-.708L11.707 8l-5.353 5.354-.708-.708L10.293 8z" /></svg>
             </button>
           </div>
-
-          {/* Path / breadcrumb bar */}
-          <div className="nautilus-pathbar">
-            <img src={pathbarIcon} alt="" className="sidebar-icon" style={{ opacity: 0.8 }} />
-            {pathSegments.map((seg, i) => (
-              <React.Fragment key={i}>
-                {i > 0 && <span className="pathbar-sep">/</span>}
-                <button
-                  className={`pathbar-crumb ${i === pathSegments.length - 1 ? 'current' : ''}`}
-                  onClick={() => navigateTo(seg.fullPath)}
-                >
-                  {seg.label}
-                </button>
-              </React.Fragment>
-            ))}
-          </div>
-
-          <div className="header-right">
-            {/* View mode toggle */}
-            <div className="view-mode-toggle">
-              <button className={`header-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid view">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 1h6v6H1zm8 0h6v6H9zM1 9h6v6H1zm8 0h6v6H9z"/></svg>
-              </button>
-              <button className={`header-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List view">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2h14v2H1zm0 4h14v2H1zm0 4h14v2H1zm0 4h14v2H1z"/></svg>
-              </button>
+          <div className="header-center">
+            {/* Path / breadcrumb bar */}
+            <div className="nautilus-pathbar">
+              <img src={pathbarIcon} alt="" className="sidebar-icon" style={{ opacity: 0.8 }} />
+              {pathSegments.map((seg, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <span className="pathbar-sep">/</span>}
+                  <button
+                    className={`pathbar-crumb ${i === pathSegments.length - 1 ? 'current' : ''}`}
+                    onClick={() => navigateTo(seg.fullPath)}
+                  >
+                    {seg.label}
+                  </button>
+                </React.Fragment>
+              ))}
             </div>
 
-            {/* Upload button */}
-            <div style={{ position: 'relative' }}>
-              <button className="header-btn upload-btn">
-                {isUploading ? (
-                  <span style={{ fontSize: '0.75rem' }}>{uploadProgress}%</span>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L4 5h3v6h2V5h3L8 1zM2 13v2h12v-2H2z" /></svg>
-                )}
-              </button>
-              <input
-                type="file"
-                onChange={handleUpload}
-                style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
-                disabled={isUploading}
-              />
-            </div>
-
-            {/* View options popover */}
+            {/* More Options popover */}
             <Popover
               align="end"
               trigger={
-                <button className="header-btn view-toggle-btn" title="View Options">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
+                <button className="header-btn view-more-btn" title="More Options">
+                  <img src={getActionIcon('view-more-symbolic')} alt="More Options" style={{ width: 16, height: 16, filter: 'brightness(0) invert(1)' }} />
                 </button>
               }
             >
-              <div className="vom-section">
-                <div className="vom-label">Icon Size</div>
-                <div className="vom-icon-size">
-                  <button onClick={() => setIconSize(s => Math.max(32, s - 16))} title="Smaller">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 7h10v2H3z"/></svg>
-                  </button>
-                  <button onClick={() => setIconSize(s => Math.min(128, s + 16))} title="Larger">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3h2v4h4v2H9v4H7V9H3V7h4z"/></svg>
-                  </button>
-                </div>
+              <button className="vom-action" onClick={() => alert('New Folder feature coming soon!')}>New Folder</button>
+              <div style={{ position: 'relative' }}>
+                <button className="vom-action" style={{ width: '100%', textAlign: 'left' }}>
+                  {isUploading ? `Uploading ${uploadProgress}%` : 'Upload...'}
+                </button>
+                <input
+                  type="file"
+                  onChange={handleUpload}
+                  style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                  disabled={isUploading}
+                />
               </div>
               <div className="vom-divider" />
-              <div className="vom-section">
-                <div className="vom-label">Sort</div>
-                {([['name-asc','A-Z'],['name-desc','Z-A'],['modified-desc','Last Modified'],['modified-asc','First Modified'],['size','Size'],['type','Type']] as [SortBy,string][]).map(([val, label]) => (
-                  <label key={val} className="vom-radio">
-                    <input type="radio" name="sort" checked={sortBy === val} onChange={() => setSortBy(val)} />
-                    <span>{label}</span>
-                  </label>
-                ))}
-              </div>
-              <div className="vom-divider" />
-              <label className="vom-checkbox" onClick={() => setShowHidden(v => !v)}>
-                <span className="vom-check-icon">{showHidden ? '✓' : ''}</span>
-                <span>Show Hidden Files</span>
-                <span className="vom-shortcut">Ctrl+H</span>
-              </label>
-              <div className="vom-divider" />
-              {viewMode === 'grid' ? (
-                <button className="vom-action" onClick={() => setCaptionsModalOpen(true)}>Captions…</button>
-              ) : (
-                <button className="vom-action" onClick={() => setColumnsModalOpen(true)}>Visible Columns…</button>
-              )}
+              <button className="vom-action" onClick={() => fetchFiles(currentPath)}>Reload</button>
+              <button className="vom-action" onClick={() => navigator.clipboard.writeText(currentPath)}>Copy Location</button>
             </Popover>
+
+          </div>
+
+          <div className="header-right">
+            {/* View controls group */}
+            <div className="view-mode-toggle">
+              <button
+                className="header-btn"
+                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                title={viewMode === 'grid' ? 'List view' : 'Grid view'}
+              >
+                <img
+                  src={getActionIcon(viewMode === 'grid' ? 'view-list-symbolic' : 'view-grid-symbolic')}
+                  alt={viewMode === 'grid' ? 'List view' : 'Grid view'}
+                  style={{ width: 16, height: 16, filter: 'brightness(0) invert(1)' }}
+                />
+              </button>
+
+              <div className="view-mode-sep" />
+
+              <Popover
+                align="end"
+                trigger={
+                  <button className="header-btn view-toggle-btn" title="View Options">
+                    <img src={getActionIcon('go-down-symbolic')} alt="View Options" style={{ width: 10, height: 10, filter: 'brightness(0) invert(1)', opacity: 0.8 }} />
+                  </button>
+                }
+              >
+                <div className="vom-section">
+                  <div className="vom-label">Icon Size</div>
+                  <div className="vom-icon-size">
+                    <button onClick={() => setIconSize(s => Math.max(32, s - 16))} title="Smaller">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 7h10v2H3z" /></svg>
+                    </button>
+                    <button onClick={() => setIconSize(s => Math.min(128, s + 16))} title="Larger">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7 3h2v4h4v2H9v4H7V9H3V7h4z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="vom-divider" />
+                <div className="vom-section">
+                  <div className="vom-label">Sort</div>
+                  {([['name-asc', 'A-Z'], ['name-desc', 'Z-A'], ['modified-desc', 'Last Modified'], ['modified-asc', 'First Modified'], ['size', 'Size'], ['type', 'Type']] as [SortBy, string][]).map(([val, label]) => (
+                    <label key={val} className="vom-radio">
+                      <input type="radio" name="sort" checked={sortBy === val} onChange={() => setSortBy(val)} />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="vom-divider" />
+                <label className="vom-checkbox" onClick={() => setShowHidden(v => !v)}>
+                  <span className="vom-check-icon">{showHidden ? '✓' : ''}</span>
+                  <span>Show Hidden Files</span>
+                  <span className="vom-shortcut">Ctrl+H</span>
+                </label>
+                <div className="vom-divider" />
+                {viewMode === 'grid' ? (
+                  <button className="vom-action" onClick={() => setCaptionsModalOpen(true)}>Captions…</button>
+                ) : (
+                  <button className="vom-action" onClick={() => setColumnsModalOpen(true)}>Visible Columns…</button>
+                )}
+              </Popover>
+            </div>
+
+
           </div>
         </header>
 
@@ -631,7 +651,7 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
             {(['First', 'Second', 'Third'] as const).map((label, i) => (
               <div key={label} className="modal-row">
                 <span>{label}</span>
-                <select value={gridCaptions[i]} onChange={e => { const c = [...gridCaptions] as [string,string,string]; c[i] = e.target.value; setGridCaptions(c); }}>
+                <select value={gridCaptions[i]} onChange={e => { const c = [...gridCaptions] as [string, string, string]; c[i] = e.target.value; setGridCaptions(c); }}>
                   <option value="none">None</option>
                   <option value="size">Size</option>
                   <option value="type">Type</option>
@@ -652,11 +672,11 @@ export default function Explorer({ onPlayVideo }: ExplorerProps) {
               <button className="modal-close" onClick={() => setColumnsModalOpen(false)}>✕</button>
             </div>
             <div className="modal-col-row disabled"><span>Name</span><span className="col-always-on">Always On</span></div>
-            {[['size','Size'],['modified','Date Modified'],['type','Type']].map(([key, label]) => (
+            {[['size', 'Size'], ['modified', 'Date Modified'], ['type', 'Type']].map(([key, label]) => (
               <div key={key} className="modal-col-row">
                 <span>{label}</span>
                 <label className="toggle-switch">
-                  <input type="checkbox" checked={!!listColumns[key]} onChange={e => setListColumns(c => ({...c, [key]: e.target.checked}))} />
+                  <input type="checkbox" checked={!!listColumns[key]} onChange={e => setListColumns(c => ({ ...c, [key]: e.target.checked }))} />
                   <span className="toggle-slider" />
                 </label>
               </div>

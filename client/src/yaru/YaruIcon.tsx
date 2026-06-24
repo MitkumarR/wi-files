@@ -70,15 +70,15 @@ export function getFolderIcon(name: string, size?: number): string {
   const specialFolders: Record<string, string> = {
     documents: 'folder-documents.png',
     downloads: 'folder-download.png',
-    music:     'folder-music.png',
-    pictures:  'folder-pictures.png',
-    videos:    'folder-videos.png',
+    music: 'folder-music.png',
+    pictures: 'folder-pictures.png',
+    videos: 'folder-videos.png',
     templates: 'folder-templates.png',
-    public:    'folder-publicshare.png',
-    desktop:   'folder-open.png',
-    network:   'network-workgroup.png',
-    trash:     'user-trash.png',
-    recent:    'folder-recent.png',
+    public: 'folder-publicshare.png',
+    desktop: 'user-desktop.png',
+    network: 'network-workgroup.png',
+    trash: 'user-trash.png',
+    recent: 'folder-recent.png',
   };
 
   const match = specialFolders[lower];
@@ -106,11 +106,11 @@ export function getStarredIcon(size?: number): string {
 /** Get SVG sidebar icons from the scalable directory */
 export function getSidebarIcon(name: string): string {
   const lower = name.toLowerCase();
-  
+
   if (lower === 'starred') {
     return resolveSvg(emblemSvg, './icons/Yaru/scalable/emblems/emblem-favorite-symbolic.svg') ?? '';
   }
-  
+
   if (lower === 'logout') {
     return resolveSvg(actionSvg, './icons/Yaru/scalable/actions/system-log-out-symbolic.svg') ?? '';
   }
@@ -138,9 +138,13 @@ export function getSidebarIcon(name: string): string {
   if (file) {
     return resolveSvg(placeSvg, `./icons/Yaru/scalable/places/${file}`) ?? '';
   }
-  
+
   // Generic fallback
   return resolveSvg(placeSvg, `./icons/Yaru/scalable/places/folder-symbolic.svg`) ?? '';
+}
+
+export function getActionIcon(name: string): string {
+  return resolveSvg(actionSvg, `./icons/Yaru/scalable/actions/${name}.svg`) ?? '';
 }
 
 export function getDesktopIcon(size?: number): string {
@@ -167,145 +171,145 @@ export function getFileIcon(filename: string, size?: number): string {
   // Extension → mimetype PNG filename
   const extMap: Record<string, string> = {
     // ── Code / text ──
-    'go':    'text-x-go.png',
-    'py':    'text-x-python.png',
-    'js':    'text-x-javascript.png',
-    'mjs':   'text-x-javascript.png',
-    'cjs':   'text-x-javascript.png',
-    'jsx':   'text-x-javascript.png',
-    'ts':    'text-x-typescript.png',
-    'tsx':   'text-x-typescript.png',
-    'rs':    'text-rust.png',
-    'c':     'text-x-c.png',
-    'h':     'text-x-chdr.png',
-    'cpp':   'text-x-cpp.png',
-    'cc':    'text-x-cpp.png',
-    'hpp':   'text-x-c++hdr.png',
-    'java':  'text-x-java.png',
-    'kt':    'text-x-kotlin.png',
-    'cs':    'text-x-csharp.png',
-    'rb':    'text-x-ruby.png',
-    'php':   'text-x-php.png',
-    'lua':   'text-x-lua.png',
-    'dart':  'text-x-dart.png',
+    'go': 'text-x-go.png',
+    'py': 'text-x-python.png',
+    'js': 'text-x-javascript.png',
+    'mjs': 'text-x-javascript.png',
+    'cjs': 'text-x-javascript.png',
+    'jsx': 'text-x-javascript.png',
+    'ts': 'text-x-typescript.png',
+    'tsx': 'text-x-typescript.png',
+    'rs': 'text-rust.png',
+    'c': 'text-x-c.png',
+    'h': 'text-x-chdr.png',
+    'cpp': 'text-x-cpp.png',
+    'cc': 'text-x-cpp.png',
+    'hpp': 'text-x-c++hdr.png',
+    'java': 'text-x-java.png',
+    'kt': 'text-x-kotlin.png',
+    'cs': 'text-x-csharp.png',
+    'rb': 'text-x-ruby.png',
+    'php': 'text-x-php.png',
+    'lua': 'text-x-lua.png',
+    'dart': 'text-x-dart.png',
     'scala': 'text-x-scala.png',
-    'r':     'text-x-r.png',
-    'v':     'text-x-v.png',
-    'vala':  'text-x-vala.png',
-    'nim':   'text-x-nim.png',
-    'hs':    'text-x-haskell.png',
-    'f90':   'text-x-fortran.png',
-    'f':     'text-x-fortran.png',
-    'pl':    'application-x-perl.png',
-    'tex':   'text-x-tex.png',
+    'r': 'text-x-r.png',
+    'v': 'text-x-v.png',
+    'vala': 'text-x-vala.png',
+    'nim': 'text-x-nim.png',
+    'hs': 'text-x-haskell.png',
+    'f90': 'text-x-fortran.png',
+    'f': 'text-x-fortran.png',
+    'pl': 'application-x-perl.png',
+    'tex': 'text-x-tex.png',
     'cobol': 'text-x-cobol.png',
 
     // ── Shell / scripts ──
-    'sh':    'application-x-shellscript.png',
-    'bash':  'application-x-shellscript.png',
-    'zsh':   'application-x-shellscript.png',
-    'fish':  'application-x-shellscript.png',
+    'sh': 'application-x-shellscript.png',
+    'bash': 'application-x-shellscript.png',
+    'zsh': 'application-x-shellscript.png',
+    'fish': 'application-x-shellscript.png',
 
     // ── Markup / data ──
-    'html':  'text-html.png',
-    'htm':   'text-html.png',
-    'css':   'text-css.png',
-    'scss':  'text-x-scss.png',
-    'sass':  'text-x-sass.png',
-    'less':  'text-less.png',
-    'xml':   'text-xml.png',
-    'json':  'application-json.png',
-    'yaml':  'application-yaml.png',
-    'yml':   'application-yaml.png',
-    'toml':  'application-toml.png',
-    'md':    'text-markdown.png',
-    'rst':   'text-x-generic.png',
-    'csv':   'text-csv.png',
-    'sql':   'text-x-sql.png',
-    'txt':   'text-x-generic.png',
-    'log':   'text-x-log.png',
+    'html': 'text-html.png',
+    'htm': 'text-html.png',
+    'css': 'text-css.png',
+    'scss': 'text-x-scss.png',
+    'sass': 'text-x-sass.png',
+    'less': 'text-less.png',
+    'xml': 'text-xml.png',
+    'json': 'application-json.png',
+    'yaml': 'application-yaml.png',
+    'yml': 'application-yaml.png',
+    'toml': 'application-toml.png',
+    'md': 'text-markdown.png',
+    'rst': 'text-x-generic.png',
+    'csv': 'text-csv.png',
+    'sql': 'text-x-sql.png',
+    'txt': 'text-x-generic.png',
+    'log': 'text-x-log.png',
 
     // ── Config / build ──
-    'makefile':    'text-x-makefile.png',
-    'cmake':       'text-x-cmake.png',
-    'dockerfile':  'text-dockerfile.png',
-    'mod':         'text-x-go.png',
-    'sum':         'text-x-generic.png',
+    'makefile': 'text-x-makefile.png',
+    'cmake': 'text-x-cmake.png',
+    'dockerfile': 'text-dockerfile.png',
+    'mod': 'text-x-go.png',
+    'sum': 'text-x-generic.png',
 
     // ── Archives ──
-    'zip':   'application-x-zip.png',
-    'gz':    'application-x-gzip.png',
-    'tar':   'application-x-gzip.png',
-    'bz2':   'application-x-gzip.png',
-    'xz':    'application-x-gzip.png',
-    'rar':   'application-x-rar.png',
-    '7z':    'application-x-7z-compressed.png',
-    'deb':   'application-vnd.debian.binary-package.png',
-    'rpm':   'package-x-generic.png',
+    'zip': 'application-x-zip.png',
+    'gz': 'application-x-gzip.png',
+    'tar': 'application-x-gzip.png',
+    'bz2': 'application-x-gzip.png',
+    'xz': 'application-x-gzip.png',
+    'rar': 'application-x-rar.png',
+    '7z': 'application-x-7z-compressed.png',
+    'deb': 'application-vnd.debian.binary-package.png',
+    'rpm': 'package-x-generic.png',
 
     // ── Documents ──
-    'pdf':   'application-pdf.png',
-    'doc':   'application-vnd.ms-word.png',
-    'docx':  'application-vnd.ms-word.png',
-    'odt':   'x-office-document.png',
-    'rtf':   'text-richtext.png',
-    'ppt':   'application-vnd.ms-powerpoint.png',
-    'pptx':  'application-vnd.ms-powerpoint.png',
-    'odp':   'x-office-presentation.png',
-    'xls':   'application-vnd.ms-excel.png',
-    'xlsx':  'application-vnd.ms-excel.png',
-    'ods':   'x-office-spreadsheet.png',
+    'pdf': 'application-pdf.png',
+    'doc': 'application-vnd.ms-word.png',
+    'docx': 'application-vnd.ms-word.png',
+    'odt': 'x-office-document.png',
+    'rtf': 'text-richtext.png',
+    'ppt': 'application-vnd.ms-powerpoint.png',
+    'pptx': 'application-vnd.ms-powerpoint.png',
+    'odp': 'x-office-presentation.png',
+    'xls': 'application-vnd.ms-excel.png',
+    'xlsx': 'application-vnd.ms-excel.png',
+    'ods': 'x-office-spreadsheet.png',
 
     // ── Images (these will show thumbnails, but we still need a fallback) ──
-    'svg':   'image-svg+xml.png',
+    'svg': 'image-svg+xml.png',
 
     // ── Audio ──
-    'mp3':   'audio-x-mpeg.png',
-    'flac':  'audio-x-flac.png',
-    'ogg':   'audio-x-vorbis+ogg.png',
-    'wav':   'audio-x-wav.png',
-    'wma':   'audio-x-ms-wma.png',
-    'aac':   'audio-x-generic.png',
-    'm4a':   'audio-x-generic.png',
+    'mp3': 'audio-x-mpeg.png',
+    'flac': 'audio-x-flac.png',
+    'ogg': 'audio-x-vorbis+ogg.png',
+    'wav': 'audio-x-wav.png',
+    'wma': 'audio-x-ms-wma.png',
+    'aac': 'audio-x-generic.png',
+    'm4a': 'audio-x-generic.png',
 
     // ── Video ──
-    'mp4':   'video-x-generic.png',
-    'mkv':   'video-x-generic.png',
-    'avi':   'video-x-generic.png',
-    'webm':  'video-x-generic.png',
-    'mov':   'video-x-generic.png',
-    'flv':   'video-x-generic.png',
+    'mp4': 'video-x-generic.png',
+    'mkv': 'video-x-generic.png',
+    'avi': 'video-x-generic.png',
+    'webm': 'video-x-generic.png',
+    'mov': 'video-x-generic.png',
+    'flv': 'video-x-generic.png',
 
     // ── Images (fallback) ──
-    'png':   'image-x-generic.png',
-    'jpg':   'image-x-generic.png',
-    'jpeg':  'image-x-generic.png',
-    'gif':   'image-x-generic.png',
-    'bmp':   'image-x-generic.png',
-    'webp':  'image-x-generic.png',
-    'ico':   'image-x-generic.png',
-    'tiff':  'image-x-generic.png',
+    'png': 'image-x-generic.png',
+    'jpg': 'image-x-generic.png',
+    'jpeg': 'image-x-generic.png',
+    'gif': 'image-x-generic.png',
+    'bmp': 'image-x-generic.png',
+    'webp': 'image-x-generic.png',
+    'ico': 'image-x-generic.png',
+    'tiff': 'image-x-generic.png',
 
     // ── Database ──
-    'db':    'application-x-sqlite3.png',
+    'db': 'application-x-sqlite3.png',
     'sqlite': 'application-x-sqlite3.png',
     'sqlite3': 'application-x-sqlite3.png',
 
     // ── Executables / binary ──
-    'exe':   'application-x-ms-dos-executable.png',
-    'bin':   'application-x-executable.png',
+    'exe': 'application-x-ms-dos-executable.png',
+    'bin': 'application-x-executable.png',
     'appimage': 'application-x-executable.png',
-    'snap':  'application-vnd.snap.png',
+    'snap': 'application-vnd.snap.png',
     'flatpak': 'application-vnd.flatpak.png',
 
     // ── Fonts ──
-    'ttf':   'font-x-generic.png',
-    'otf':   'font-x-generic.png',
-    'woff':  'font-x-generic.png',
+    'ttf': 'font-x-generic.png',
+    'otf': 'font-x-generic.png',
+    'woff': 'font-x-generic.png',
     'woff2': 'font-x-generic.png',
 
     // ── Misc ──
-    'iso':   'application-x-cd-image.png',
+    'iso': 'application-x-cd-image.png',
     'torrent': 'application-x-bittorrent.png',
     'desktop': 'application-x-desktop.png',
   };
@@ -318,15 +322,15 @@ export function getFileIcon(filename: string, size?: number): string {
 
   // Filename-based matches (no extension)
   const nameMap: Record<string, string> = {
-    'makefile':   'text-x-makefile.png',
+    'makefile': 'text-x-makefile.png',
     'dockerfile': 'text-dockerfile.png',
-    'readme':     'text-x-readme.png',
-    'readme.md':  'text-x-readme.png',
-    'license':    'text-x-copying.png',
-    'copying':    'text-x-copying.png',
-    'authors':    'text-x-authors.png',
-    'changelog':  'text-x-log.png',
-    'install':    'text-x-install.png',
+    'readme': 'text-x-readme.png',
+    'readme.md': 'text-x-readme.png',
+    'license': 'text-x-copying.png',
+    'copying': 'text-x-copying.png',
+    'authors': 'text-x-authors.png',
+    'changelog': 'text-x-log.png',
+    'install': 'text-x-install.png',
   };
 
   const nameLower = filename.toLowerCase();
