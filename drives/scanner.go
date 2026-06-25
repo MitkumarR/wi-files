@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"wifiles-server/database"
+	"wi-files/database"
 )
 
 func StartBackgroundScan(targets []string) {

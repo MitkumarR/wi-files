@@ -1,4 +1,4 @@
-module wifiles-server
+module wi-files
 
 go 1.26.4
 

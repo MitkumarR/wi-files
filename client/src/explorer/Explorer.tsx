@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   getFolderIcon,
   getFileIcon,
-  getHomeIcon,
   getDriveSystemIcon,
   getSidebarIcon,
   getActionIcon,
@@ -31,10 +30,6 @@ interface DriveInfo {
   usedPct?: string;
 }
 
-interface ExplorerProps {
-  onPlayVideo?: (path: string) => void;
-}
-
 /** Extract user's home directory from the JWT token */
 function getUserHome(): string {
   try {
@@ -47,7 +42,7 @@ function getUserHome(): string {
   }
 }
 
-export default function Explorer({ onPlayVideo }: ExplorerProps) {
+export default function Explorer() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 

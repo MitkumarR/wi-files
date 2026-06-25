@@ -61,15 +61,7 @@ function App() {
     navigate(`/files?path=${encodeURIComponent(home)}`, { replace: true });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('jwt_token');
-    setIsAuthenticated(false);
-    navigate('/auth/login', { replace: true });
-  };
 
-  const handlePlayVideo = (filePath: string) => {
-    navigate(`/view?path=${encodeURIComponent(filePath)}`);
-  };
 
   // If user hits root /, redirect to /files or /auth/login
   const home = getUserHome();
@@ -95,7 +87,7 @@ function App() {
             {/* Main Content Area */}
             <main className="main-content">
               <Routes>
-                <Route path="/files" element={<Explorer onPlayVideo={handlePlayVideo} />} />
+                <Route path="/files" element={<Explorer />} />
                 <Route path="/view" element={<FileViewer />} />
                 <Route path="*" element={<Navigate to={`/files?path=${encodeURIComponent(home)}`} replace />} />
               </Routes>

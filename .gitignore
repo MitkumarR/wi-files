@@ -35,3 +35,10 @@ go.work.sum
 *.db
 wi-files.db
 wi-files.db-journal
+
+# Build output
+bin/
+client/dist/
+
+# Node
+client/node_modules/

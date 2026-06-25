@@ -1,21 +1,26 @@
 package main
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"strings"
 
-	"wifiles-server/auth"
-	"wifiles-server/database"
-	"wifiles-server/drives"
-	"wifiles-server/files"
+	"wi-files/auth"
+	"wi-files/database"
+	"wi-files/drives"
+	"wi-files/files"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/mdp/qrterminal/v3"
 )
+
+//go:embed client/dist/*
+var embeddedFrontend embed.FS
 
 // ... (middlewares)
 
@@ -118,19 +123,43 @@ func main() {
 	http.HandleFunc("/api/auth/users", corsMiddleware(securityMiddleware(auth.HandleUsers)))
 	http.HandleFunc("/api/auth/avatar", corsMiddleware(securityMiddleware(auth.HandleUserAvatar)))
 
+	// Serve the embedded React frontend for all non-API routes
+	frontendFS, err := fs.Sub(embeddedFrontend, "client/dist")
+	if err != nil {
+		log.Fatal("Failed to load embedded frontend:", err)
+	}
+
+	// SPA fallback: serve index.html for any route that doesn't match a real file
+	spaHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Try to serve the exact file first (JS, CSS, images, etc.)
+		path := strings.TrimPrefix(r.URL.Path, "/")
+		if path == "" {
+			path = "index.html"
+		}
+		if _, err := fs.Stat(frontendFS, path); err == nil {
+			http.FileServer(http.FS(frontendFS)).ServeHTTP(w, r)
+			return
+		}
+		// If file doesn't exist, serve index.html (React Router handles the route)
+		index, _ := fs.ReadFile(frontendFS, "index.html")
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(index)
+	})
+	http.Handle("/", spaHandler)
+
 	ip := getLocalIP()
-	clientURL := fmt.Sprintf("http://%s:5173", ip)
+	serverURL := fmt.Sprintf("http://%s:8080", ip)
 
 	fmt.Printf("\n======================================================\n")
 	fmt.Printf(" Scan this QR Code to open Wi-Files on your phone\n")
-	fmt.Printf(" URL: %s\n\n", clientURL)
-	
+	fmt.Printf(" URL: %s\n\n", serverURL)
+
 	// Generate a compact QR code in the terminal
-	qrterminal.GenerateHalfBlock(clientURL, qrterminal.L, os.Stdout)
+	qrterminal.GenerateHalfBlock(serverURL, qrterminal.L, os.Stdout)
 	fmt.Printf("\n")
 	fmt.Printf("======================================================\n\n")
 
-	log.Println("Wi-File Backend running on http://localhost:8080")
+	log.Println("Wi-Files running on", serverURL)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
