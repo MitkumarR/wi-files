@@ -1,6 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getActionIcon } from '../yaru/YaruIcon';
+import { getActionIcon } from '../../yaru/YaruIcon';
 
 // ── Lazy-loaded viewers (only downloaded when needed) ──────────────────────
 const ImageViewer = lazy(() => import('./ImageViewer'));
@@ -30,41 +29,30 @@ function ViewerSkeleton() {
   );
 }
 
-export default function FileViewer() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+interface FileViewerProps {
+  filePath: string;
+  onClose: () => void;
+  onNavigate?: (path: string) => void;
+}
 
-  const filePath  = searchParams.get('path') || '';
+export default function FileViewer({ filePath, onClose, onNavigate }: FileViewerProps) {
   const token     = localStorage.getItem('jwt_token') || '';
   const fileName  = filePath.split('/').pop() || 'Unknown';
   const ext       = fileName.split('.').pop()?.toLowerCase() || '';
   const streamUrl = `/api/download?path=${encodeURIComponent(filePath)}&token=${encodeURIComponent(token)}`;
 
-  const goBack = () => {
-    const parentDir = filePath.substring(0, filePath.lastIndexOf('/')) || '/';
-    navigate(`/files?path=${encodeURIComponent(parentDir)}`);
-  };
-
   const ViewerComponent = getViewer(ext);
 
-  if (!filePath) {
-    return (
-      <div className="viewer-container">
-        <div className="nautilus-empty">No file selected.</div>
-      </div>
-    );
-  }
+  if (!filePath) return null;
 
   return (
-    <div className="viewer-container">
+    <div className="viewer-container viewer-overlay">
       {/* ── Header ───────────────────────────────────────────────────── */}
       <div className="viewer-header">
-        <button className="header-btn" onClick={goBack} title="Back">
-          <img
-            src={getActionIcon('go-previous-symbolic')}
-            alt="Back"
-            style={{ width: 16, height: 16, filter: 'brightness(0) invert(1)' }}
-          />
+        <button className="header-btn" onClick={onClose} title="Close">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
         </button>
 
         <span className="viewer-filename">{fileName}</span>
@@ -86,7 +74,7 @@ export default function FileViewer() {
       <div className="viewer-content">
         {ViewerComponent ? (
           <Suspense fallback={<ViewerSkeleton />}>
-            <ViewerComponent streamUrl={streamUrl} fileName={fileName} filePath={filePath} />
+            <ViewerComponent streamUrl={streamUrl} fileName={fileName} filePath={filePath} onNavigate={onNavigate} />
           </Suspense>
         ) : (
           <div className="viewer-unsupported">

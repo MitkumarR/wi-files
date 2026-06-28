@@ -81,7 +81,7 @@ body {
 /* Override: non-explorer views still need padding */
 .main-content>.dash-grid,
 .main-content>.explorer-container,
-.main-content>div:not(.nautilus-root) {
+.main-content>div:not(.nautilus-root):not(.viewer-container) {
   padding: 1rem;
 }
 
@@ -1298,6 +1298,17 @@ h1 {
   flex-direction: column;
   height: 100%;
   background: #000;
+  padding: 0;
+  margin: 0;
+}
+
+.viewer-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
 }
 
 .viewer-header {
@@ -1325,8 +1336,9 @@ h1 {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 1rem;
-  height: 0; /* force flex children to respect 100% height */
+  padding: 0;
+  height: 0;
+  /* force flex children to respect 100% height */
 }
 
 .viewer-image {
@@ -1364,13 +1376,17 @@ h1 {
 .viewer-skeleton-spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid rgba(255,255,255,0.15);
+  border: 3px solid rgba(255, 255, 255, 0.15);
   border-top-color: var(--naut-accent, #3584e4);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ── Unsupported file fallback ───────────────────────────────────────── */
 .viewer-unsupported {
@@ -1384,7 +1400,7 @@ h1 {
 }
 
 .viewer-unsupported code {
-  background: rgba(255,255,255,0.07);
+  background: rgba(255, 255, 255, 0.07);
   padding: 0.15rem 0.4rem;
   border-radius: 4px;
   font-size: 0.85rem;
@@ -1403,7 +1419,7 @@ h1 {
 }
 
 .viewer-download-btn:hover {
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* ── Text / Code viewer ──────────────────────────────────────────────── */
@@ -1433,7 +1449,7 @@ h1 {
   font-weight: 600;
   color: var(--naut-text);
   font-size: 0.75rem;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   padding: 0.1rem 0.45rem;
   border-radius: 4px;
 }
@@ -1477,4 +1493,210 @@ h1 {
   gap: 0.75rem;
   color: var(--naut-text-dim);
   font-size: 0.85rem;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   GNOME IMAGE VIEWER (Loupe)
+   ════════════════════════════════════════════════════════════════════════ */
+.gnome-iv {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Canvas ──────────────────────────────────────────────────────────── */
+.gnome-iv-canvas {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #1a1a1a;
+  position: relative;
+}
+
+.gnome-iv-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.1s ease-out;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ── Yaru icon filter (white on dark) ────────────────────────────────── */
+.gnome-iv-icon {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1);
+}
+
+/* ── Floating Bottom Toolbar ─────────────────────────────────────────── */
+.gnome-iv-toolbar {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.gnome-iv-toolbar-left,
+.gnome-iv-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+/* ── Pill containers (rounded grouped buttons) ───────────────────────── */
+.gnome-iv-pill {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(30, 30, 30, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.gnome-iv-pill-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--naut-text, #f0f0f0);
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.gnome-iv-pill-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gnome-iv-pill-btn:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.gnome-iv-pill-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ── Zoom label button ───────────────────────────────────────────────── */
+.gnome-iv-zoom-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 48px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Info toggle button ──────────────────────────────────────────────── */
+.gnome-iv-info-btn {
+  padding: 8px;
+  border-radius: 999px;
+}
+
+.gnome-iv-info-btn.active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Image counter badge ─────────────────────────────────────────────── */
+.gnome-iv-counter {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 30, 0.85);
+  backdrop-filter: blur(12px);
+  color: var(--naut-text-dim, #aaa);
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 10;
+}
+
+/* ── Properties Sidebar ──────────────────────────────────────────────── */
+.gnome-iv-sidebar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 260px;
+  background: rgba(36, 36, 36, 0.95);
+  backdrop-filter: blur(16px);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 5;
+}
+
+.gnome-iv-sidebar.open {
+  transform: translateX(0);
+}
+
+.gnome-iv-prop-group {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 4px 0;
+}
+
+.gnome-iv-prop-row {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px;
+}
+
+.gnome-iv-prop-row+.gnome-iv-prop-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.gnome-iv-prop-label {
+  font-size: 0.72rem;
+  color: var(--naut-text-dim, #888);
+  margin-bottom: 2px;
+}
+
+.gnome-iv-prop-value {
+  font-size: 0.88rem;
+  color: var(--naut-text, #eee);
+  font-weight: 500;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .gnome-iv-sidebar {
+    width: 220px;
+  }
+
+  .gnome-iv-toolbar {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+  }
+
+  .gnome-iv-pill-btn {
+    padding: 6px 8px;
+  }
+
+  .gnome-iv-zoom-label {
+    min-width: 40px;
+  }
 }

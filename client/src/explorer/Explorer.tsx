@@ -8,7 +8,7 @@ import {
   getActionIcon,
 } from '../yaru/YaruIcon';
 import Popover from '../components/Popover';
-
+import FileViewer from '../components/viewer/FileViewer';
 interface FileInfo {
   name: string;
   path: string;
@@ -45,6 +45,7 @@ function getUserHome(): string {
 export default function Explorer() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [viewingFilePath, setViewingFilePath] = useState<string | null>(null);
 
   const userHome = getUserHome(); // e.g. /home/mit
 
@@ -558,7 +559,7 @@ export default function Explorer() {
                   className={`nautilus-item ${f.name.startsWith('.') ? 'nautilus-hidden-item' : ''}`}
                   onDoubleClick={() => {
                     if (f.isDir) navigateTo(f.path);
-                    else if (isViewable(f.name)) navigate(`/view?path=${encodeURIComponent(f.path)}`);
+                    else if (isViewable(f.name)) setViewingFilePath(f.path);
                   }}
                   onContextMenu={(e) => { e.preventDefault(); if (!f.isDir) downloadFile(f.path); }}
                 >
@@ -613,7 +614,7 @@ export default function Explorer() {
                   className={`nautilus-list-item ${f.name.startsWith('.') ? 'nautilus-hidden-item' : ''}`}
                   onDoubleClick={() => {
                     if (f.isDir) navigateTo(f.path);
-                    else if (isViewable(f.name)) navigate(`/view?path=${encodeURIComponent(f.path)}`);
+                    else if (isViewable(f.name)) setViewingFilePath(f.path);
                   }}
                   onContextMenu={(e) => { e.preventDefault(); if (!f.isDir) downloadFile(f.path); }}
                 >
@@ -779,6 +780,15 @@ export default function Explorer() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── File Viewer Overlay ────────────────────────────────────── */}
+      {viewingFilePath && (
+        <FileViewer
+          filePath={viewingFilePath}
+          onClose={() => setViewingFilePath(null)}
+          onNavigate={(path) => setViewingFilePath(path)}
+        />
       )}
     </div>
   );

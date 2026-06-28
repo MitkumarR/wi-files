@@ -4,8 +4,6 @@ import './index.css';
 import Explorer from './explorer/Explorer';
 import Auth from './auth/Auth';
 
-import FileViewer from './viewer/FileViewer';
-
 /** Check if we have a valid (non-expired) JWT in localStorage */
 function hasValidToken(): boolean {
   const token = localStorage.getItem('jwt_token');
@@ -88,7 +86,6 @@ function App() {
             <main className="main-content">
               <Routes>
                 <Route path="/files" element={<Explorer />} />
-                <Route path="/view" element={<FileViewer />} />
                 <Route path="*" element={<Navigate to={`/files?path=${encodeURIComponent(home)}`} replace />} />
               </Routes>
             </main>
