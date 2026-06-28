@@ -14,6 +14,7 @@ import (
 	"wi-files/database"
 	"wi-files/drives"
 	"wi-files/files"
+	"wi-files/search"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/mdp/qrterminal/v3"
@@ -122,6 +123,7 @@ func main() {
 	http.HandleFunc("/api/auth/login", corsMiddleware(securityMiddleware(auth.HandleLogin)))
 	http.HandleFunc("/api/auth/users", corsMiddleware(securityMiddleware(auth.HandleUsers)))
 	http.HandleFunc("/api/auth/avatar", corsMiddleware(securityMiddleware(auth.HandleUserAvatar)))
+	http.HandleFunc("/api/search", corsMiddleware(securityMiddleware(search.HandleSearch)))
 
 	// Serve the embedded React frontend for all non-API routes
 	frontendFS, err := fs.Sub(embeddedFrontend, "client/dist")
