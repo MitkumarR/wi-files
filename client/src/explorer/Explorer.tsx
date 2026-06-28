@@ -238,10 +238,16 @@ export default function Explorer() {
     return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'mp4', 'avi', 'mkv', 'webm', 'mov', 'pdf'].includes(ext || '');
   };
 
-  /** Check if a file is viewable (image or video) */
+  /** Check if a file is viewable (image, video, text, pdf) */
   const isViewable = (name: string) => {
     const ext = name.split('.').pop()?.toLowerCase() || '';
-    return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'mp4', 'mkv', 'webm', 'avi', 'mov'].includes(ext);
+    const viewable = [
+      'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', // images
+      'mp4', 'mkv', 'webm', 'avi', 'mov', // videos
+      'pdf', // documents
+      'txt', 'md', 'csv', 'json', 'log', 'xml', 'yaml', 'yml', 'sh', 'py', 'js', 'ts', 'tsx', 'jsx', 'go', 'rs', 'cpp', 'c', 'h', 'java', 'css', 'html', 'ini', 'toml', 'env' // text/code
+    ];
+    return viewable.includes(ext);
   };
 
   /* ──── Quick-access sidebar items ──── */
