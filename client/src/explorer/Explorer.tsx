@@ -584,13 +584,6 @@ export default function Explorer() {
                       {cap === 'size' ? formatSize(f.size) : cap === 'modified' ? new Date(f.modTime).toLocaleDateString() : cap === 'type' ? (f.isDir ? 'Folder' : getExt(f.name).toUpperCase() || 'File') : ''}
                     </span>
                   ))}
-                  {!f.isDir && (
-                    <div className="nautilus-item-actions">
-                      <button onClick={(e) => { e.stopPropagation(); downloadFile(f.path); }} title="Download">
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v10l3-3 .7.7L8 12.4 4.3 8.7 5 8l3 3V1zM2 13v2h12v-2H2z" /></svg>
-                      </button>
-                    </div>
-                  )}
                 </div>
               ))}
               {processedFiles.length === 0 && (

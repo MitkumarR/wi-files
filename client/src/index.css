@@ -1700,3 +1700,202 @@ h1 {
     min-width: 40px;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   GNOME VIDEO VIEWER (Totem / Videos)
+   ════════════════════════════════════════════════════════════════════════ */
+.gnome-vv {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+}
+
+.gnome-vv--hide-cursor {
+  cursor: none;
+}
+
+/* ── Video Canvas ────────────────────────────────────────────────────── */
+.gnome-vv-canvas {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.gnome-vv-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ── Controls Overlay ────────────────────────────────────────────────── */
+.gnome-vv-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 16px 16px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.gnome-vv-controls.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ── Progress bar ────────────────────────────────────────────────────── */
+.gnome-vv-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gnome-vv-time {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.8);
+  min-width: 40px;
+  text-align: center;
+  user-select: none;
+}
+
+.gnome-vv-seek {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  outline: none;
+  cursor: pointer;
+  transition: height 0.15s;
+}
+
+.gnome-vv-seek:hover {
+  height: 6px;
+}
+
+.gnome-vv-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.gnome-vv-seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Control buttons row ─────────────────────────────────────────────── */
+.gnome-vv-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gnome-vv-buttons-left,
+.gnome-vv-buttons-center,
+.gnome-vv-buttons-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gnome-vv-buttons-left {
+  flex: 1;
+}
+
+.gnome-vv-buttons-right {
+  flex: 1;
+  justify-content: flex-end;
+}
+
+/* ── Play button ─────────────────────────────────────────────────────── */
+.gnome-vv-play-btn {
+  padding: 10px 14px !important;
+}
+
+/* ── Volume ──────────────────────────────────────────────────────────── */
+.gnome-vv-volume-pill {
+  gap: 0;
+}
+
+.gnome-vv-volume {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  outline: none;
+  cursor: pointer;
+  transition: width 0.2s ease, margin 0.2s ease, opacity 0.2s ease;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gnome-vv-volume-pill:hover .gnome-vv-volume {
+  width: 70px;
+  margin: 0 8px 0 4px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gnome-vv-volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+.gnome-vv-volume::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .gnome-vv-controls {
+    padding: 0 10px 10px;
+  }
+
+  .gnome-vv-volume-pill:hover .gnome-vv-volume {
+    width: 50px;
+  }
+
+  .gnome-vv-play-btn {
+    padding: 8px 12px !important;
+  }
+}
